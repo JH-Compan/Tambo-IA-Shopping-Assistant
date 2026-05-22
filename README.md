@@ -25,12 +25,12 @@ Pendiente de completar según avance del desarrollo.
 
 ## Equipo
 
-- Product Owner:
-- Scrum Master:
-- Backend:
-- Frontend:
-- IA / Datos:
+- Product Owner: Anthony 
+- Scrum Master: Camilo S. Silva
+- Backend: Michael Gavino
+- Frontend:  Alexander Manosalva
+- IA / Datos: Jhunior F. Herrera 
 
 ## Metodología
 
-El proyecto se desarrolla usando Scrum, organizado en sprints semanales desde la semana 10 hasta la semana 16.
+El proyecto se desarrolla usando Scrum, organizado en sprints semanales.
