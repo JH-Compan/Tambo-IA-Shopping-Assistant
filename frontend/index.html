@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tambot - Asistente de compras</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="chat-card">
+      <header class="chat-header">
+        <div>
+          <h1>Tambot</h1>
+          <p>Asistente de compras simulado para Tambo+</p>
+        </div>
+        <span class="status">Demo Sprint 1</span>
+      </header>
+
+      <section id="chatMessages" class="chat-messages" aria-live="polite">
+        <article class="message bot">
+          <p>Hola, soy Tambot. Puedo ayudarte a consultar promociones, buscar productos o armar un carrito simulado.</p>
+        </article>
+      </section>
+
+      <form id="chatForm" class="chat-form">
+        <input id="chatInput" type="text" placeholder="Escribe: promociones, buscar gaseosa, carrito..." autocomplete="off" />
+        <button type="submit">Enviar</button>
+      </form>
+    </section>
+
+    <aside class="cart-card">
+      <h2>Carrito</h2>
+      <ul id="cartItems"></ul>
+      <p class="cart-total">Total: S/ <span id="cartTotal">0.00</span></p>
+    </aside>
+  </main>
+
+  <script src="js/recomendaciones.js"></script>
+  <script src="js/carrito.js"></script>
+  <script src="js/chatbot.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
