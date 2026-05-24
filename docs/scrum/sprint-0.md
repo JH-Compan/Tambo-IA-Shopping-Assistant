@@ -1,33 +1,124 @@
-# Sprint 0 - Tambot
+# Documento Sprint 0 - Tambot
 
-## Propósito
+## Portada
+- Proyecto: Tambo AI Shopping Assistant / Tambot
+- Curso: Ingeniería de Software
+- Fecha
+- Integrantes
+- Docente
 
-Organizar la base inicial del proyecto antes de iniciar el desarrollo funcional.
+## 1. Introducción
+Explica brevemente de qué trata el proyecto y que Sprint 0 será la etapa de preparación inicial.
 
-## Objetivo
-
-Definir el alcance simulado, Product Goal, MVP, estructura del repositorio, arquitectura base, archivos Excel requeridos, historias de usuario iniciales y planificación de Sprint 1 y Sprint 2.
-
-## Alcance incluido
-
-- Ajustar el documento visión a un alcance académico y simulado.
-- Definir Product Goal y MVP delimitado.
-- Definir la estructura general del repositorio.
-- Establecer la arquitectura base del sistema.
-- Definir herramientas y tecnologías principales.
-- Definir archivos Excel como base de datos simulada.
+## 2. Propósito del Sprint 0
+Describe para qué sirve Sprint 0:
+- Organizar el proyecto.
+- Definir herramientas.
+- Preparar el repositorio.
 - Organizar historias de usuario.
-- Distribuir trabajo entre Sprint 1 y Sprint 2.
+- Reducir incertidumbre antes de Sprint 1.
 
-## Alcance no incluido
+## 3. Objetivo del Sprint 0
+Redacta el objetivo general, por ejemplo:
 
+> Definir la organización inicial del proyecto Tambot, estableciendo el alcance simulado, Product Goal, MVP, estructura del repositorio, arquitectura base, archivos Excel, backlog inicial y planificación de los sprints.
+
+## 4. Alcance del Sprint 0
+
+### Incluye
+- Definir Product Goal.
+- Definir MVP.
+- Crear estructura del repositorio.
+- Definir arquitectura base.
+- Definir herramientas.
+- Organizar historias de usuario.
+- Planificar Sprint 1 y Sprint 2.
+
+### No incluye
 - WhatsApp real.
-- LLM externo real.
-- CRM real.
-- Pagos reales.
+- Pago real.
 - Delivery real.
-- Despliegue productivo en nube.
+- CRM real.
+- LLM externo real.
+- Despliegue productivo.
 
-## Resultado esperado
+## 5. Visión resumida del proyecto
+Explica qué será Tambot:
 
-Al finalizar Sprint 0, el equipo debe contar con una base clara para iniciar Sprint 1: alcance realista, estructura del repositorio, herramientas, Product Backlog, roles, criterios de trabajo y riesgos identificados.
+> Una simulación web de chatbot para Tambo+ que permite consultar promociones, buscar productos, recibir recomendaciones básicas, agregar productos al carrito y visualizar un resumen de pedido usando Excel como base de datos simulada.
+
+## 6. Product Goal
+Coloca el objetivo del producto:
+
+> Construir una simulación web de un asistente de compras para Tambo+ que permita consultar promociones, buscar productos, recibir recomendaciones básicas y armar un pedido simulado usando Excel como base de datos.
+
+## 7. MVP delimitado
+
+### El MVP incluye
+- Interfaz web tipo chat.
+- Consulta de promociones.
+- Búsqueda de productos.
+- Lectura de datos desde Excel.
+- Validación básica de stock.
+- Carrito simulado.
+- Resumen de pedido.
+- Registro de interacciones básicas.
+
+### El MVP no incluye
+- WhatsApp real.
+- IA real conectada a API externa.
+- Pago real.
+- Delivery.
+- CRM real.
+- Seguridad avanzada.
+
+## 8. Herramientas y tecnologías
+
+### Principales
+- HTML
+- CSS
+- JavaScript
+- Excel
+- Git y GitHub
+- Google Drive
+
+### Opcionales
+- Python con Flask
+- Docker
+
+## 9. Estructura base del repositorio
+Aquí colocas el árbol del proyecto:
+
+```bash
+tambo-ai-shopping-assistant/
+│
+├── docs/
+│   ├── scrum/
+│   ├── backlog/
+│   ├── arquitectura/
+│   └── evidencias/
+│
+├── frontend/
+│   ├── index.html
+│   ├── css/
+│   │   └── styles.css
+│   └── js/
+│       ├── app.js
+│       ├── chatbot.js
+│       ├── carrito.js
+│       └── recomendaciones.js
+│
+├── data/
+│   ├── productos.xlsx
+│   ├── promociones.xlsx
+│   ├── stock.xlsx
+│   ├── historial_compras.xlsx
+│   └── interacciones.xlsx
+│
+├── python/
+│   └── app.py
+│
+├── tests/
+├── README.md
+├── .gitignore
+└── Dockerfile
