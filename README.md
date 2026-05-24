@@ -35,35 +35,77 @@ El MVP no incluye:
 ## Estructura del proyecto
 
 ```bash
-tambo-ai-shopping-assistant/
+Tambo-IA-Shopping-Assistant/
 │
-├── docs/                         # Documentación del proyecto y evidencias de Scrum
-│   ├── scrum/                    # Documentos de Sprint 0, Sprint 1 y Sprint 2
-│   ├── backlog/                  # Historias de usuario, backlog e issues
-│   ├── arquitectura/             # Arquitectura, diagramas y decisiones técnicas
-│   └── evidencias/               # Capturas, pruebas, commits y demostraciones
+├── docs/                              # Documentación del proyecto
+│   │
+│   ├── scrum/                         # Documentos Scrum del proyecto
+│   │   ├── sprint-0.md                # Documento del Sprint 0
+│   │   ├── sprint-1.md                # Documento del Sprint 1
+│   │   ├── sprint-2.md                # Documento del Sprint 2
+│   │   │
+│   │   └── daily-scrum/               # Registro de reuniones Daily Scrum
+│   │       ├── sprint-1/
+│   │       │   ├── daily-01.md
+│   │       │   ├── daily-02.md
+│   │       │   └── daily-03.md
+│   │       │
+│   │       └── sprint-2/
+│   │           ├── daily-01.md
+│   │           ├── daily-02.md
+│   │           └── daily-03.md
+│   │
+│   ├── backlog/                       # Historias de usuario y backlogs
+│   │   ├── historias-usuario.md       # Historias de usuario del sistema
+│   │   ├── product-backlog.md         # Product Backlog priorizado
+│   │   └── sprint-backlog.md          # Tareas seleccionadas por sprint
+│   │
+│   ├── arquitectura/                  # Documentación técnica
+│   │   ├── arquitectura-base.md       # Arquitectura general del sistema
+│   │   ├── decisiones-tecnicas.md     # Decisiones técnicas del proyecto
+│   │   └── diagramas.md               # Diagramas del sistema
+│   │
+│   └── evidencias/                    # Evidencias por sprint
+│       ├── sprint-0/
+│       ├── sprint-1/
+│       └── sprint-2/
 │
-├── frontend/                     # Interfaz web del chatbot
-│   ├── index.html                # Pantalla principal de la simulación
+├── frontend/                          # Interfaz web del chatbot
+│   ├── index.html                     # Página principal
+│   │
 │   ├── css/
-│   │   └── styles.css            # Estilos visuales del chatbot
-│   └── js/
-│       ├── app.js                # Inicialización general
-│       ├── chatbot.js            # Flujo conversacional
-│       ├── carrito.js            # Manejo del carrito
-│       └── recomendaciones.js    # Lógica de recomendaciones
+│   │   └── styles.css                 # Estilos visuales
+│   │
+│   ├── js/                            # Lógica del frontend
+│   │   ├── app.js                     # Inicialización general
+│   │   ├── chatbot.js                 # Flujo del chatbot
+│   │   ├── carrito.js                 # Carrito de compras
+│   │   ├── recomendaciones.js         # Recomendaciones
+│   │   └── productos.js               # Productos y búsqueda
+│   │
+│   └── assets/                        # Imágenes, logos e íconos
 │
-├── data/                         # Archivos Excel usados como base de datos simulada
-│   └── README.md                 # Estructura esperada de los Excel
+├── data/                              # Archivos Excel usados como base de datos
+│   ├── productos.xlsx                 # Catálogo de productos
+│   ├── promociones.xlsx               # Promociones vigentes
+│   ├── stock.xlsx                     # Disponibilidad de productos
+│   ├── historial_compras.xlsx         # Historial simulado de clientes
+│   └── interacciones.xlsx             # Registro de interacciones del chatbot
 │
-├── python/                       # Backend opcional en Python
-│   └── app.py                    # Aplicación Flask opcional
+├── python/                            # Backend opcional
+│   ├── app.py                         # Aplicación Flask
+│   ├── requirements.txt               # Dependencias Python
+│   └── README.md                      # Guía del backend
 │
-├── tests/                        # Pruebas básicas del sistema
+├── tests/                             # Pruebas del sistema
+│   ├── pruebas-promociones.md
+│   ├── pruebas-busqueda.md
+│   ├── pruebas-carrito.md
+│   └── pruebas-recomendaciones.md
 │
-├── README.md                     # Descripción, instalación y ejecución del proyecto
-├── .gitignore                    # Archivos que no se subirán al repositorio
-└── Dockerfile                    # Configuración opcional para contenedores
+├── README.md                          # Presentación principal del proyecto
+├── .gitignore                         # Archivos ignorados por Git
+└── Dockerfile                         # Configuración opcional para Docker
 ```
 
 ## Tecnologías principales
