@@ -1,78 +1,56 @@
-# Documento Sprint 0 - Tambot
+<p align="center">
+  <strong>Portada</strong>
+</p>
+<p align="center">
+  <strong>Proyecto:</strong> Tambo AI Shopping Assistant / Tambot
+</p>
+<p align="center">
+  <strong>Integrantes:</strong>
+</p>
 
-## Portada
-- Proyecto: Tambo AI Shopping Assistant / Tambot
-- Curso: Ingeniería de Software
-- Fecha
-- Integrantes
-- Docente
+<p align="center">
+  1. HERRERA VALERIANO JHUNIOR FERNANDO
+</p>
+<p align="center">
+  2. MANOSALVA PERALTA YOJAN ALEXANDER
+</p>
+<p align="center">
+  3. ZUÑIGA VASQUEZ ANTONY GEAMPIER
+</p>
+<p align="center">
+  4. GAVINO ISIDRO MICHAEL RICHARD
+</p>
+<p align="center">
+  5. SILVA CUZQUI CAMILO SEBASTIAN
+</p>
+<p align="center">
+  <strong>Curso:</strong> Ingeniería de Software
+</p>
+<p align="center">
+  <strong>Docente:</strong> HUAPALLA GARCIA JUAN MANUEL
+</p>
+<p align="center">
+  <strong>Fecha:</strong> 24 DE MAYO DEL 2026
+</p>
+
 
 ## 1. Introducción
-Explica brevemente de qué trata el proyecto y que Sprint 0 será la etapa de preparación inicial.
+- En este documento se explicará la preparación inicial del proyecto Tambo AI Shopping Assistant / Tambot. El Sprint 0 tiene como finalidad establecer buenas bases para el desarrollo, definiendo los artefactos principales del proyecto, como el alcance, las herramientas y tecnologías, la estructura del repositorio, las historias de usuario, el Product Backlog y la planificación de los Sprint 1 y Sprint 2.
 
-## 2. Propósito del Sprint 0
-Describe para qué sirve Sprint 0:
-- Organizar el proyecto.
-- Definir herramientas.
-- Preparar el repositorio.
-- Organizar historias de usuario.
-- Reducir incertidumbre antes de Sprint 1.
-
-## 3. Objetivo del Sprint 0
-Redacta el objetivo general, por ejemplo:
-
-> Definir la organización inicial del proyecto Tambot, estableciendo el alcance simulado, Product Goal, MVP, estructura del repositorio, arquitectura base, archivos Excel, backlog inicial y planificación de los sprints.
-
-## 4. Alcance del Sprint 0
+## 2. Alcance
 
 ### Incluye
-- Definir Product Goal.
-- Definir MVP.
-- Crear estructura del repositorio.
-- Definir arquitectura base.
-- Definir herramientas.
+- Organizar el proyecto.
 - Organizar historias de usuario.
-- Planificar Sprint 1 y Sprint 2.
+- Organizar el product backlog.
+- Definir herramientas y tecnologías.
+- Estructurar el repositorio.
+- Planificación del Sprint 1 y 2.
 
-### No incluye
-- WhatsApp real.
-- Pago real.
-- Delivery real.
-- CRM real.
-- LLM externo real.
-- Despliegue productivo.
+## 3. Visión resumida
+- Una simulación web de chatbot para Tambo+ que permite consultar promociones, buscar productos, recibir recomendaciones básicas, agregar productos al carrito y visualizar un resumen de pedido usando Excel como base de datos simulada.
 
-## 5. Visión resumida del proyecto
-Explica qué será Tambot:
-
-> Una simulación web de chatbot para Tambo+ que permite consultar promociones, buscar productos, recibir recomendaciones básicas, agregar productos al carrito y visualizar un resumen de pedido usando Excel como base de datos simulada.
-
-## 6. Product Goal
-Coloca el objetivo del producto:
-
-> Construir una simulación web de un asistente de compras para Tambo+ que permita consultar promociones, buscar productos, recibir recomendaciones básicas y armar un pedido simulado usando Excel como base de datos.
-
-## 7. MVP delimitado
-
-### El MVP incluye
-- Interfaz web tipo chat.
-- Consulta de promociones.
-- Búsqueda de productos.
-- Lectura de datos desde Excel.
-- Validación básica de stock.
-- Carrito simulado.
-- Resumen de pedido.
-- Registro de interacciones básicas.
-
-### El MVP no incluye
-- WhatsApp real.
-- IA real conectada a API externa.
-- Pago real.
-- Delivery.
-- CRM real.
-- Seguridad avanzada.
-
-## 8. Herramientas y tecnologías
+## 4. Herramientas y tecnologías
 
 ### Principales
 - HTML
@@ -86,39 +64,88 @@ Coloca el objetivo del producto:
 - Python con Flask
 - Docker
 
-## 9. Estructura base del repositorio
-Aquí colocas el árbol del proyecto:
+## 5. Estructura base del repositorio
 
-```bash
-tambo-ai-shopping-assistant/
-│
-├── docs/
-│   ├── scrum/
-│   ├── backlog/
-│   ├── arquitectura/
-│   └── evidencias/
-│
-├── frontend/
-│   ├── index.html
-│   ├── css/
-│   │   └── styles.css
-│   └── js/
-│       ├── app.js
-│       ├── chatbot.js
-│       ├── carrito.js
-│       └── recomendaciones.js
-│
-├── data/
-│   ├── productos.xlsx
-│   ├── promociones.xlsx
-│   ├── stock.xlsx
-│   ├── historial_compras.xlsx
-│   └── interacciones.xlsx
-│
-├── python/
-│   └── app.py
-│
-├── tests/
-├── README.md
-├── .gitignore
-└── Dockerfile
+    Tambo-IA-Shopping-Assistant/
+    │
+    ├── docs/
+    │   │
+    │   ├── scrum/
+    │   │   ├── sprint-0.md
+    │   │   ├── sprint-1.md
+    │   │   ├── sprint-2.md
+    │   │   │
+    │   │   └── daily-scrum/
+    │   │       ├── sprint-1/
+    │   │       │   ├── daily-01.md
+    │   │       │   ├── daily-02.md
+    │   │       │   └── daily-03.md
+    │   │       │
+    │   │       └── sprint-2/
+    │   │           ├── daily-01.md
+    │   │           ├── daily-02.md
+    │   │           └── daily-03.md
+    │   │
+    │   ├── backlog/
+    │   │   ├── historias-usuario.md
+    │   │   ├── product-backlog.md
+    │   │   └── sprint-backlog.md
+    │   │
+    │   ├── arquitectura/
+    │   │   ├── arquitectura-base.md
+    │   │   ├── decisiones-tecnicas.md
+    │   │   └── diagramas.md
+    │   │
+    │   └── evidencias/
+    │       ├── sprint-0/
+    │       │   └── README.md
+    │       ├── sprint-1/
+    │       │   └── README.md
+    │       └── sprint-2/
+    │           └── README.md
+    │
+    ├── frontend/
+    │   ├── index.html
+    │   │
+    │   ├── css/
+    │   │   └── styles.css
+    │   │
+    │   ├── js/
+    │   │   ├── app.js
+    │   │   ├── chatbot.js
+    │   │   ├── carrito.js
+    │   │   ├── recomendaciones.js
+    │   │   └── productos.js
+    │   │
+    │   └── assets/
+    │       └── README.md
+    │
+    ├── data/
+    │   ├── README.md
+    │   ├── productos.xlsx
+    │   ├── promociones.xlsx
+    │   ├── stock.xlsx
+    │   ├── historial_compras.xlsx
+    │   └── interacciones.xlsx
+    │
+    ├── python/
+    │   ├── app.py
+    │   ├── requirements.txt
+    │   └── README.md
+    │
+    ├── tests/
+    │   ├── README.md
+    │   ├── pruebas-promociones.md
+    │   ├── pruebas-busqueda.md
+    │   ├── pruebas-carrito.md
+    │   └── pruebas-recomendaciones.md
+    │
+    ├── README.md
+    ├── .gitignore
+    └── Dockerfile
+## 6. Roles
+- Product Owner: Anthony
+- Scrum Master: Camilo S. Silva
+- Backend: Michael Gavino
+- Frontend: Alexander Manosalva
+- IA / Datos: Jhunior F. Herrera
