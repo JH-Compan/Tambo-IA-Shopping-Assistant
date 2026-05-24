@@ -40,12 +40,27 @@
 ## 2. Alcance
 
 ### Incluye
-- Organizar el proyecto.
-- Organizar historias de usuario.
-- Organizar el product backlog.
-- Definir herramientas y tecnologías.
-- Estructurar el repositorio.
-- Planificación del Sprint 1 y 2.
+
+- Organización general del proyecto.
+- Definición del alcance inicial del sistema.
+- Organización de las historias de usuario.
+- Elaboración del Product Backlog.
+- Definición de herramientas y tecnologías.
+- Estructuración del repositorio en GitHub.
+- Preparación de la documentación inicial.
+- Planificación general del Sprint 1 y Sprint 2.
+- Definición de roles del equipo.
+- Registro inicial de issues en GitHub.
+
+### No incluye
+
+- Integración real con WhatsApp Business.
+- Uso de inteligencia artificial real conectada a una API externa.
+- Pago real o pasarela de pagos.
+- Delivery real.
+- Conexión con CRM o inventario real de Tambo+.
+- Despliegue productivo en la nube.
+- Implementación completa de funcionalidades finales.
 
 ## 3. Visión resumida
 - Una simulación web de chatbot para Tambo+ que permite consultar promociones, buscar productos, recibir recomendaciones básicas, agregar productos al carrito y visualizar un resumen de pedido usando Excel como base de datos simulada.
