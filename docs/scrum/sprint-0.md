@@ -49,8 +49,9 @@
 
 ## 3. Visión resumida
 - Una simulación web de chatbot para Tambo+ que permite consultar promociones, buscar productos, recibir recomendaciones básicas, agregar productos al carrito y visualizar un resumen de pedido usando Excel como base de datos simulada.
-
-## 4. Herramientas y tecnologías
+## 4. Historia de usuario
+## 5. Product Backlog
+## 6. Herramientas y tecnologías
 
 ### Principales
 - HTML
@@ -64,7 +65,8 @@
 - Python con Flask
 - Docker
 
-## 5. Estructura base del repositorio
+
+## 7. Estructura base del repositorio
 
     Tambo-IA-Shopping-Assistant/
     │
@@ -143,7 +145,8 @@
     ├── README.md
     ├── .gitignore
     └── Dockerfile
-## 6. Roles
+## 8. Planificación sprint 1 y 2
+## 8. Roles
 - Product Owner: Anthony
 - Scrum Master: Camilo S. Silva
 - Backend: Michael Gavino
