@@ -60,7 +60,6 @@
 - Delivery real.
 - Conexión con CRM o inventario real de Tambo+.
 - Despliegue productivo en la nube.
-- Implementación completa de funcionalidades finales.
 
 ## 3. Visión resumida
 - Una simulación web de chatbot para Tambo+ que permite consultar promociones, buscar productos, recibir recomendaciones básicas, agregar productos al carrito y visualizar un resumen de pedido usando Excel como base de datos simulada.
