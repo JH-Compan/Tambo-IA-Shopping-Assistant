@@ -63,10 +63,12 @@
 
 ## 3. Visión resumida
 - Una simulación web de chatbot para Tambo+ que permite consultar promociones, buscar productos, recibir recomendaciones básicas, agregar productos al carrito y visualizar un resumen de pedido usando Excel como base de datos simulada.
-## 4. Historia de usuario
+## 4. Historias de usuario
+- [Ver historias de usuario](../backlog/historias-usuario.md)
 ## 5. Product Backlog
+- [Ver Product Backlog](../backlog/product-backlog.md)
 ## 6. Herramientas y tecnologías
-
+- [Ver herramientas y tecnologías](../arquitectura/herramientas_tecnologias.md)
 ### Principales
 - HTML
 - CSS
@@ -160,7 +162,8 @@
     ├── .gitignore
     └── Dockerfile
 ## 8. Planificación sprint 1 y 2
-## 8. Roles
+- [Ver planificaciones](../backlog/sprint-backlog.md)
+## 9. Roles
 - Product Owner: Anthony
 - Scrum Master: Camilo S. Silva
 - Backend: Michael Gavino
