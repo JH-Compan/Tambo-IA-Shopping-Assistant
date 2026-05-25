@@ -1,41 +1,44 @@
-## Arquitectura Base del Sistema
+# Arquitectura Base del Sistema
 
-El sistema se ha diseñado bajo un patrón de arquitectura desacoplada por capas para la simulación académica de **TamboBot**. Al tratarse de un prototipo controlado, los componentes garantizan el aislamiento entre la presentación visual, la ejecución de la lógica del chatbot y el almacenamiento de datos tabulares.
+## 1. Tipo de Solución
+Simulación web de un chatbot de recomendaciones para Tambo+ con datos almacenados y persistidos en archivos locales de Microsoft Excel. La solución emula de forma exclusiva la interfaz conversacional de la plataforma WhatsApp Business, procesando texto, flujos de opciones y respuestas dinámicas sin depender de interfaces de comercio electrónico tradicionales.
 
-### Diagrama de Arquitectura de Capas
+---
 
-El siguiente diagrama de bloques representa la organización modular del sistema y el flujo bidireccional de la información desde la interfaz de usuario hasta los archivos de persistencia:
+## 2. Capas Propuestas
+
+El sistema se organiza bajo una arquitectura desacoplada de tres capas principales y un componente de backend opcional para la exposición de servicios.
 
 ```mermaid
 graph TD
     subgraph Capa_Presentacion [1. Capa de Frontend / Presentación]
-        A[Interfaz Web Tipo Chat HTML5/CSS3] --> B[Manejo Visual del Carrito]
+        A[Interfaz Web Tipo Chat WhatsApp] --> B[Simulación de Mensajes Interactivos]
+        B --> C[Captura de Inputs de Usuario]
     end
 
     subgraph Capa_Logica [2. Capa de Lógica del Sistema / Backend]
-        C[Controlador de Flujo Conversacional] --> D[Motor de Búsqueda de Productos]
-        C --> E[Módulo de Consulta de Promociones]
-        C --> F[Motor de Recomendaciones Básicas LLM/Reglas]
-        C --> G[Gestor Lógico del Carrito]
+        D[Controlador de Flujo Conversacional .py] --> E[Motor de Búsqueda de Productos]
+        D --> F[Módulo de Consulta de Promociones]
+        D --> G[Algoritmo de Recomendaciones según Historial]
     end
 
     subgraph Capa_Datos [3. Capa de Datos Simulados / Persistencia]
-        H[(Dataset: Productos.xlsx)]
-        I[(Dataset: Promociones.xlsx)]
-        J[(Dataset: Stock.xlsx)]
-        K[(Dataset: Historial_Compras.xlsx)]
-        L[(Dataset: Interacciones_Chatbot.xlsx)]
+        H[(Productos.xlsx)]
+        I[(Promociones.xlsx)]
+        J[(Stock.xlsx)]
+        K[(Historial_Compras.xlsx)]
+        L[(Interacciones_Chatbot.xlsx)]
     end
 
-    %% Flujos e Interconexiones Técnicas
-    A <-->|Peticiones Asíncronas HTTP JSON| C
-    D <-->|Lectura/Filtro de Datos| H
-    E <-->|Lectura/Filtro de Datos| I
-    F <-->|Cruza Historial e Inventario| K
-    F <-->|Valida Disponibilidad| J
-    C --->|Log de Sesiones| L
+    %% Conexiones e intercambio de información
+    A <-->|Mensajes de Texto / Eventos JSON| D
+    E <--->|Lectura de registros| H
+    F <--->|Filtro de ofertas vigentes| I
+    G <--->|Cruce de DNI / Celular| K
+    G <--->|Validación de disponibilidad| J
+    D --->|Log de auditoría| L
 
-    %% Estilos del Diagrama (Diseño Brutalismo / Minimalista)
-    style Capa_Presentacion fill:#ffffff,stroke:#333333,stroke-width:1px
+    %% Estilos de las cajas
+    style Capa_Presentacion fill:#ffffff,stroke:#25D366,stroke-width:2px
     style Capa_Logica fill:#ffffff,stroke:#333333,stroke-width:1px
-    style Capa_Datos fill:#ffffff,stroke:#333333,stroke-width:1px
+    style Capa_Datos fill:#ffffff,stroke:#217346,stroke-width:2px
