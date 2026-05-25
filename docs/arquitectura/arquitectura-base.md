@@ -42,8 +42,7 @@ graph TD
     style Capa_Presentacion fill:#ffffff,stroke:#25D366,stroke-width:2px
     style Capa_Logica fill:#ffffff,stroke:#333333,stroke-width:1px
     style Capa_Datos fill:#ffffff,stroke:#217346,stroke-width:2px
-
----
+```
 sequenceDiagram
     autonumber
     actor Cliente as Cliente (Interfaz Web Chat)
