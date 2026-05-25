@@ -42,3 +42,34 @@ graph TD
     style Capa_Presentacion fill:#ffffff,stroke:#25D366,stroke-width:2px
     style Capa_Logica fill:#ffffff,stroke:#333333,stroke-width:1px
     style Capa_Datos fill:#ffffff,stroke:#217346,stroke-width:2px
+
+---
+sequenceDiagram
+    autonumber
+    actor Cliente as Cliente (Interfaz Web Chat)
+    participant Interfaz as Simulador WhatsApp (HTML/CSS/JS)
+    participant Backend as Servidor Chatbot (Python/Flask)
+    participant Persistencia as Base de Datos (Excel .xlsx)
+
+    Cliente->>Interfaz: Ingresa número de celular o escribe mensaje inicial
+    activate Interfaz
+    Interfaz->>Backend: Enviar Petición HTTP POST (Payload JSON con mensaje)
+    activate Backend
+    
+    Backend->>Persistencia: Consulta registro de cliente en 'Historial_Compras.xlsx'
+    activate Persistencia
+    Persistencia-->>Backend: Retorna datos del usuario y perfil de compras
+    deactivate Persistencia
+
+    Backend->>Backend: Procesa algoritmo de recomendación (Cruza historial con ofertas)
+
+    Backend->>Persistencia: Verifica disponibilidad en 'Stock.xlsx'
+    activate Persistencia
+    Persistencia-->>Backend: Confirma existencias del producto sugerido
+    deactivate Persistencia
+
+    Backend-->>Interfaz: Retorna estructura de mensaje de WhatsApp con la recomendación
+    deactivate Backend
+    
+    Interfaz-->>Cliente: Muestra globos de diálogo interactivos con la sugerencia de compra
+    deactivate Interfaz
