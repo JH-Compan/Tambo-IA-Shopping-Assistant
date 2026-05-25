@@ -70,7 +70,6 @@ Construir una simulación web de un asistente de compras para Tambo+ que permita
 ### No incluye
 
 - Integración real con WhatsApp Business API.
-- Inteligencia artificial real conectada a una API externa.
 - Pago real o pasarela de pagos.
 - Delivery real.
 - CRM real.
