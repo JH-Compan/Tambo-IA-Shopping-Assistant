@@ -1,22 +1,109 @@
+<div align="center">
+
 # Arquitectura Base del Sistema
 
-## 1. Descripción General de la Solución
+### Simulación Web de Chatbot de Recomendaciones para Tambo+
 
-El proyecto consiste en el desarrollo de una simulación web de un chatbot de recomendaciones para Tambo+, diseñada bajo una experiencia conversacional similar a WhatsApp Business.
+---
 
-La solución permite que el usuario interactúe mediante mensajes de texto, opciones dinámicas y respuestas automatizadas, simulando una conversación natural con un asistente virtual.
+</div>
 
-A diferencia de una plataforma de comercio electrónico tradicional, el sistema se enfoca completamente en la interacción conversacional, ofreciendo recomendaciones de productos, promociones y sugerencias personalizadas según el historial del cliente.
+# 1. Tipo de Solución
 
-La información del sistema será almacenada en archivos locales de Microsoft Excel (`.xlsx`), utilizados como mecanismo de persistencia y simulación de base de datos.
+> La solución consiste en una simulación web de un chatbot de recomendaciones para Tambo+, utilizando archivos locales de Microsoft Excel como mecanismo de almacenamiento y persistencia de datos.
+
+<br>
+
+<table>
+<tr>
+<td width="50%">
+
+### Características del Sistema
+
+- Mensajes de texto.
+- Flujos interactivos de opciones.
+- Respuestas dinámicas.
+- Recomendaciones personalizadas.
+
+</td>
+
+<td width="50%">
+
+### Enfoque de la Solución
+
+El sistema emula exclusivamente la interfaz conversacional de WhatsApp Business, priorizando una experiencia tipo chat sobre interfaces tradicionales de comercio electrónico.
+
+</td>
+</tr>
+</table>
+
+<details>
+<summary><strong>Objetivo principal de la solución</strong></summary>
+
+```text
+Simular un chatbot inteligente de recomendaciones
+para Tambo+ utilizando una experiencia conversacional
+similar a WhatsApp Business.
+```
+
+</details>
 
 ---
 
 # 2. Arquitectura General del Sistema
 
-La arquitectura del sistema se encuentra dividida en tres capas principales, permitiendo mantener una estructura organizada, modular y fácil de mantener.
+> El sistema se encuentra organizado bajo una arquitectura desacoplada de tres capas principales.
 
-## 2.1 Estructura Arquitectónica
+<table>
+<tr>
+<td width="60%">
+
+### Capas Principales
+
+1. Capa de Presentación.
+2. Capa de Lógica del Sistema.
+3. Capa de Persistencia de Datos.
+
+</td>
+
+<td width="40%">
+
+### Componente Adicional
+
+Además, se contempla un componente backend encargado de exponer servicios y procesar la lógica conversacional.
+
+</td>
+</tr>
+</table>
+
+---
+
+## Distribución Arquitectónica
+
+| Capa | Responsabilidad Principal |
+|---|---|
+| Presentación | Interacción visual con el usuario |
+| Lógica del Sistema | Procesamiento conversacional y recomendaciones |
+| Persistencia de Datos | Almacenamiento y consulta de información |
+
+<details>
+<summary><strong>Vista simplificada de la arquitectura</strong></summary>
+
+```text
+Usuario
+   ↓
+Interfaz Web (Frontend)
+   ↓
+Backend Conversacional
+   ↓
+Archivos Excel (.xlsx)
+```
+
+</details>
+
+---
+
+## 2.1 Diagrama de Arquitectura
 
 ```mermaid
 graph TD
@@ -39,102 +126,165 @@ graph TD
         L[(Interacciones_Chatbot.xlsx)]
     end
 
-    %% Relaciones
-    A <-->|Mensajes / Eventos JSON| D
-    E <--->|Consulta de productos| H
-    F <--->|Promociones activas| I
-    G <--->|Historial de compras| K
-    G <--->|Validación de stock| J
-    D --->|Registro de interacciones| L
+    %% Conexiones e intercambio de información
+    A <-->|Mensajes de Texto / Eventos JSON| D
+    E <--->|Lectura de registros| H
+    F <--->|Filtro de ofertas vigentes| I
+    G <--->|Cruce de DNI / Celular| K
+    G <--->|Validación de disponibilidad| J
+    D --->|Log de auditoría| L
 
-    %% Estilos
+    %% Estilos de las cajas
     style Capa_Presentacion fill:#ffffff,stroke:#25D366,stroke-width:2px
-    style Capa_Logica fill:#ffffff,stroke:#333333,stroke-width:1.5px
+    style Capa_Logica fill:#ffffff,stroke:#333333,stroke-width:1px
     style Capa_Datos fill:#ffffff,stroke:#217346,stroke-width:2px
 ```
 
 ---
 
-# 3. Descripción de las Capas
+# 3. Descripción de las Capas del Sistema
+
+---
 
 ## 3.1 Capa de Presentación
 
-La capa de presentación corresponde a la interfaz visual con la que interactúa el usuario.
+> Encargada de la interacción directa con el usuario mediante una interfaz web que simula el comportamiento visual y conversacional de WhatsApp Business.
 
-Su objetivo principal es simular el entorno conversacional de WhatsApp Business, permitiendo enviar mensajes, visualizar respuestas y seleccionar opciones interactivas de manera intuitiva.
+<table>
+<tr>
+<td width="50%">
 
-### Funciones principales
+### Funciones Principales
 
 - Mostrar mensajes del chatbot.
 - Simular conversaciones en tiempo real.
-- Capturar mensajes ingresados por el usuario.
-- Mostrar botones y listas interactivas.
-- Enviar solicitudes al backend mediante HTTP.
+- Capturar entradas del usuario.
+- Gestionar botones y listas interactivas.
+- Enviar solicitudes HTTP al backend.
 
-### Tecnologías propuestas
+</td>
 
-- HTML5
-- CSS3
-- JavaScript
+<td width="50%">
+
+### Tecnologías Utilizadas
+
+| Tecnología | Función |
+|---|---|
+| HTML5 | Estructura de la interfaz |
+| CSS3 | Diseño visual y estilos |
+| JavaScript | Interactividad y eventos |
+
+</td>
+</tr>
+</table>
+
+<details>
+<summary><strong>Flujo de interacción de la interfaz</strong></summary>
+
+```text
+Usuario → Interfaz Web → Captura de mensaje → Envío HTTP → Backend
+```
+
+</details>
 
 ---
 
 ## 3.2 Capa de Lógica del Sistema
 
-Esta capa contiene el procesamiento principal del chatbot y la lógica encargada de generar respuestas dinámicas.
+> Responsable del procesamiento principal del chatbot y de toda la lógica conversacional del sistema.
 
-Aquí se controlan las recomendaciones, las promociones y el flujo completo de la conversación.
+### Componentes Principales
 
-### Componentes principales
+| Componente | Función |
+|---|---|
+| Controlador Conversacional | Administra el flujo de mensajes y estados de la conversación |
+| Motor de Búsqueda de Productos | Consulta información de productos almacenados en Excel |
+| Módulo de Promociones | Filtra ofertas y promociones activas |
+| Algoritmo de Recomendaciones | Genera sugerencias personalizadas según historial y preferencias |
 
-### Controlador Conversacional
+---
 
-Administra el flujo de mensajes entre el usuario y el sistema, interpretando cada interacción realizada desde la interfaz web.
+### Factores Utilizados por el Algoritmo de Recomendación
 
-### Motor de Búsqueda de Productos
+<table>
+<tr>
+<td align="center" width="25%">
 
-Realiza consultas sobre los productos disponibles registrados en los archivos Excel.
+#### Historial
+Analiza compras anteriores del usuario.
 
-### Módulo de Promociones
+</td>
 
-Identifica promociones activas y ofertas disponibles según las condiciones establecidas.
+<td align="center" width="25%">
 
-### Algoritmo de Recomendaciones
+#### Frecuencia
+Detecta patrones de consumo.
 
-Genera recomendaciones personalizadas utilizando:
+</td>
 
-- Historial de compras.
-- Frecuencia de consumo.
-- Preferencias detectadas.
-- Disponibilidad de stock.
-- Productos consultados anteriormente.
+<td align="center" width="25%">
 
-### Tecnologías propuestas
+#### Preferencias
+Identifica productos consultados.
 
-- Python
-- Flask
+</td>
+
+<td align="center" width="25%">
+
+#### Stock
+Verifica disponibilidad en inventario.
+
+</td>
+</tr>
+</table>
+
+---
+
+### Tecnologías Utilizadas
+
+| Tecnología | Uso |
+|---|---|
+| Python | Procesamiento del chatbot |
+| Flask | Exposición de servicios backend |
+
+<details>
+<summary><strong>Proceso interno de recomendación</strong></summary>
+
+```text
+Consulta de historial
+        ↓
+Análisis de preferencias
+        ↓
+Cruce con promociones activas
+        ↓
+Validación de stock
+        ↓
+Generación de recomendación personalizada
+```
+
+</details>
 
 ---
 
 ## 3.3 Capa de Persistencia de Datos
 
-La persistencia del sistema se realiza mediante archivos Excel (`.xlsx`), utilizados como almacenamiento estructurado de información.
+La persistencia se realiza mediante archivos `.xlsx`, los cuales simulan una base de datos estructurada.
 
-Cada archivo cumple una función específica dentro del sistema.
+### Archivos utilizados
 
-| Archivo | Función |
+| Archivo | Descripción |
 |---|---|
-| `Productos.xlsx` | Almacena información de productos |
-| `Promociones.xlsx` | Contiene promociones y ofertas activas |
-| `Stock.xlsx` | Registra disponibilidad de inventario |
-| `Historial_Compras.xlsx` | Guarda el historial de compras del cliente |
-| `Interacciones_Chatbot.xlsx` | Registra conversaciones y auditoría |
+| `Productos.xlsx` | Información general de productos |
+| `Promociones.xlsx` | Registro de promociones vigentes |
+| `Stock.xlsx` | Control de disponibilidad de inventario |
+| `Historial_Compras.xlsx` | Historial de compras de clientes |
+| `Interacciones_Chatbot.xlsx` | Registro de conversaciones y auditoría |
 
 ---
 
-# 4. Flujo de Funcionamiento del Sistema
+# 4. Flujo de Datos y Secuencia Operativa
 
-El siguiente diagrama muestra el proceso completo desde que el usuario envía un mensaje hasta que el sistema devuelve una recomendación personalizada.
+El siguiente diagrama describe el flujo de interacción entre el cliente, la interfaz web, el backend y los archivos de persistencia.
 
 ## 4.1 Diagrama de Secuencia
 
@@ -146,52 +296,50 @@ sequenceDiagram
 
     participant Interfaz as Simulador WhatsApp (HTML/CSS/JS)
     participant Backend as Servidor Chatbot (Python/Flask)
-    participant Persistencia as Base de Datos Simulada (Excel .xlsx)
+    participant Persistencia as Base de Datos (Excel .xlsx)
 
-    Cliente->>Interfaz: Envía mensaje o ingresa su número
+    Cliente->>Interfaz: Ingresa número de celular o escribe mensaje inicial
 
     activate Interfaz
 
-    Interfaz->>Backend: HTTP POST con payload JSON
+    Interfaz->>Backend: Enviar petición HTTP POST (Payload JSON con mensaje)
 
     activate Backend
 
-    Backend->>Persistencia: Consulta historial de compras
+    Backend->>Persistencia: Consultar registro en 'Historial_Compras.xlsx'
 
     activate Persistencia
 
-    Persistencia-->>Backend: Retorna datos del cliente
+    Persistencia-->>Backend: Retornar perfil e historial de compras
 
     deactivate Persistencia
 
-    Backend->>Backend: Procesa recomendaciones y promociones
+    Backend->>Backend: Procesar algoritmo de recomendación
 
-    Backend->>Persistencia: Verifica disponibilidad en stock
+    Backend->>Persistencia: Verificar disponibilidad en 'Stock.xlsx'
 
     activate Persistencia
 
-    Persistencia-->>Backend: Confirma existencias
+    Persistencia-->>Backend: Confirmar existencias del producto
 
     deactivate Persistencia
 
-    Backend-->>Interfaz: Retorna respuesta estructurada
+    Backend-->>Interfaz: Retornar mensaje estructurado tipo WhatsApp
 
     deactivate Backend
 
-    Interfaz-->>Cliente: Muestra sugerencia personalizada
+    Interfaz-->>Cliente: Mostrar recomendación personalizada
 
     deactivate Interfaz
 ```
 
 ---
 
-# 5. Comunicación entre Frontend y Backend
+# 5. Especificación de Mensajería del Simulador
 
-La comunicación entre el simulador web y el backend se realizará mediante estructuras JSON, simulando el comportamiento de la API de WhatsApp Business.
+La comunicación entre el frontend y el backend se realiza mediante estructuras JSON que simulan el comportamiento de WhatsApp Business.
 
----
-
-## 5.1 Ejemplo de Mensaje de Entrada
+## 5.1 Mensaje de Entrada
 
 ```json
 {
@@ -205,27 +353,27 @@ La comunicación entre el simulador web y el backend se realizará mediante estr
 
 | Campo | Descripción |
 |---|---|
-| `sender_phone` | Número telefónico del cliente |
-| `message_body` | Mensaje enviado por el usuario |
-| `timestamp` | Fecha y hora de la interacción |
+| `sender_phone` | Número de teléfono del usuario |
+| `message_body` | Contenido del mensaje enviado |
+| `timestamp` | Fecha y hora del mensaje |
 
 ---
 
-## 5.2 Ejemplo de Mensaje de Salida
+## 5.2 Mensaje de Salida Estructurado
 
 ```json
 {
   "recipient_phone": "999888777",
   "message_type": "interactive_list",
-  "body_text": "Hola Alexander, basado en tus compras frecuentes, tenemos esta recomendación para ti:",
+  "body_text": "Hola Alexander, basado en tu compra frecuente de los viernes, te sugerimos este combo exclusivo para ti:",
   "options": [
     {
       "id": "combo_01",
-      "title": "Aceptar recomendación"
+      "title": "Aceptar Combo Sugerido"
     },
     {
-      "id": "catalogo",
-      "title": "Ver catálogo general"
+      "id": "cat_gen",
+      "title": "Ver Catálogo General"
     }
   ]
 }
@@ -237,57 +385,88 @@ La comunicación entre el simulador web y el backend se realizará mediante estr
 |---|---|
 | `recipient_phone` | Número del destinatario |
 | `message_type` | Tipo de mensaje interactivo |
-| `body_text` | Contenido principal del mensaje |
-| `options` | Opciones disponibles para el usuario |
+| `body_text` | Texto principal enviado por el chatbot |
+| `options` | Lista de opciones interactivas |
 
 ---
+# 6. Beneficios de la Arquitectura
 
-# 6. Ventajas de la Arquitectura Propuesta
+> La arquitectura propuesta ofrece diversas ventajas tanto a nivel académico como técnico, permitiendo desarrollar un sistema organizado, modular y fácil de mantener.
 
-La arquitectura planteada permite desarrollar un sistema organizado y escalable, facilitando tanto la implementación como el mantenimiento del proyecto.
+<table>
+<tr>
+<td width="50%">
 
-### Principales ventajas
+### Beneficios Técnicos
 
 - Separación clara de responsabilidades.
-- Mayor facilidad de mantenimiento.
-- Arquitectura modular.
-- Simulación realista de WhatsApp Business.
-- Persistencia simple mediante archivos Excel.
-- Facilidad para realizar pruebas y mejoras.
+- Facilidad de mantenimiento.
+- Escalabilidad modular.
+- Persistencia simple mediante Excel.
 - Posibilidad de migrar posteriormente a bases de datos reales.
+
+</td>
+
+<td width="50%">
+
+### Beneficios Funcionales
+
+- Simulación realista de WhatsApp Business.
+- Facilidad de implementación académica.
+- Bajo costo de infraestructura.
+- Organización eficiente de componentes.
+- Mayor facilidad para realizar mejoras futuras.
+
+</td>
+</tr>
+</table>
+
+<details>
+<summary><strong>Impacto de la arquitectura propuesta</strong></summary>
+
+```text
+Arquitectura desacoplada
+            ↓
+Mayor organización del sistema
+            ↓
+Facilidad de mantenimiento y escalabilidad
+            ↓
+Posibilidad de evolución tecnológica futura
+```
+
+</details>
 
 ---
 
 # 7. Posibles Mejoras Futuras
 
-El sistema puede ampliarse posteriormente incorporando nuevas funcionalidades y tecnologías más avanzadas.
+> El sistema puede evolucionar incorporando nuevas tecnologías y funcionalidades más avanzadas en futuras versiones.
 
-### Mejoras propuestas
+## Mejoras Propuestas
 
-- Integración con la API oficial de WhatsApp Business.
-- Uso de bases de datos relacionales.
-- Panel administrativo web.
-- Implementación de inteligencia artificial.
-- Recomendaciones más precisas mediante análisis de datos.
-- Integración con métodos de pago.
-- Despliegue en servicios cloud.
-
----
-
-# 8. Tecnologías Utilizadas
-
-| Componente | Tecnología |
+| Área | Posible Mejora |
 |---|---|
-| Frontend | HTML, CSS, JavaScript |
-| Backend | Python, Flask |
-| Persistencia | Microsoft Excel (.xlsx) |
-| Comunicación | HTTP + JSON |
-| Interfaz Conversacional | Simulación WhatsApp Web |
+| Integración | APIs reales de WhatsApp Business |
+| Persistencia | Uso de MySQL o PostgreSQL |
+| Inteligencia Artificial | Recomendaciones avanzadas |
+| Administración | Panel de gestión de productos y promociones |
+| Seguridad | Autenticación de usuarios |
+| Analítica | Dashboards y métricas del sistema |
+| Comercio Digital | Integración con pasarelas de pago |
+| Infraestructura | Despliegue en servicios cloud |
 
 ---
 
-# 9. Conclusión
+## Evolución Esperada del Sistema
 
-La arquitectura desarrollada permite implementar una simulación funcional de un chatbot inteligente para Tambo+, enfocada en recomendaciones y atención personalizada mediante una experiencia conversacional similar a WhatsApp Business.
+```text
+Versión Académica
+        ↓
+Sistema Modular Funcional
+        ↓
+Integración con Servicios Reales
+        ↓
+Escalabilidad Empresarial
+```
 
-El uso de una estructura desacoplada facilita la organización del sistema y permite que el proyecto pueda evolucionar fácilmente hacia soluciones más robustas en el futuro.
+---
