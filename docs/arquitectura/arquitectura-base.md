@@ -1,6 +1,6 @@
 <div align="center">
 
-# Arquitectura Base del Sistema
+# Arquitectura Base del Ssitema
 
 ### Simulación Web de Chatbot de Recomendaciones para Tambo+
 
