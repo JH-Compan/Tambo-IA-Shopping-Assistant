@@ -1,12 +1,14 @@
 # Product Backlog inicial
 
-ID | Módulo | Historia de usuario | Prioridad (Crítica,Alta, Medio o Baja) | Sprint sugerido | Criterio de aceptación | Estado |
-|---|-----------|---------------------|-----------------------------------------|------------------|-------------------------|-----------|
-| PB1 | Interfaz | Como cliente, quiero interactuar con un asistente tipo chat para consultar productos | Critica | Sprint 1 | Se muestra interfaz web tipo chat funcional, con mensajes básicos | Perndiente |
-| PB2 | Promociones | Como cliente, quiero consultar promociones vigentes para aprovechar descuentos | Alta | Sprint 1 | El sistema lee promociones desde Excel y las muestra en el chat | Pendiente |
-| PB3 | Búsqueda | Como cliente, quiero buscar productos por nombre o categoría | Alta | Sprint 1 | El sistema devuelve resultados correctos desde productos.xlsx | Pendiente |
-| PB4 | Carrito | Como cliente, quiero agregar productos a un carrito simulado | Alta | Sprint 1 | El carrito muestra productos seleccionados y calcula subtotal | Pendiente |
-| PB5 | Stock | Como cliente, quiero validar disponibilidad de productos antes de agregarlos | Media | Sprint 2 | El sistema consulta stock.xlsx y muestra mensaje si no hay disponibilidad | Pendiente |
-| PB6 | Recomendaciones | Como cliente, quiero recibir recomendaciones básicas según mis búsquedas | Media | Sprint 2 | El sistema sugiere productos relacionados usando historial_compras.xlsx | Pendiente |
-| PB7 | Resumen | Como cliente, quiero ver un resumen de mi pedido antes de confirmar | Media | Sprint 2 | El sistema muestra lista de productos, cantidades y total | Pendiente |
-| PB8 | Registro | Como admin, quiero registrar interacciones básicas del chatbot | Baja | Sprint 2 | Se guarda cada interacción en interacciones.xlsx | Pendiente |
+# 📋 Product Backlog - Tambo IA Asistente de Compras
+
+| ID    | Módulo                  | Historia de Usuario                                                   | Prioridad | Sprint sugerido | Estado     |
+|-------|--------------------------|-----------------------------------------------------------------------|-----------|-----------------|------------|
+| PB-01 | Promociones              | Consultar promociones vigentes                                 |  Crítica | Sprint 1         | Pendiente  |
+| PB-02 | Búsqueda                 | Buscar productos por nombre/categoría                          |  Alta   | Sprint 1          | Pendiente  |
+| PB-03 | Clientes nuevos          | Sugerencias de productos más vendidos para clientes nuevos       |  Alta   | Sprint 1        | Pendiente  |
+| PB-06 | Carrito                  | Agregar productos al carrito                                   |  Alta   | Sprint 1          | Pendiente  |
+| PB-05 | Stock                    | Validar stock de productos                                     |  Media  | Sprint 2          | Pendiente  |
+| PB-04 | Recomendaciones          | Sugerencias basadas en historial de compras para clientes frecuentes |  Alta   | Sprint 2    | Pendiente  |
+| PB-07 | Pedido                   | Visualizar resumen de pedido                                   |  Media  | Sprint 2          | Pendiente  |
+| PB-08 | Administración           | Gestionar datos en Excel                                       |  Alta   | Sprint 2          | Pendiente  |
