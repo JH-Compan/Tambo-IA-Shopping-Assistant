@@ -2,8 +2,6 @@
 
 # 📋 Product Backlog - Tambo IA Asistente de Compras
 
-# 📋 Product Backlog - Tambo IA Asistente de Compras
-
 | ID    | Módulo                  | Historia de Usuario                                                                 | Prioridad | Sprint sugerido | Estado     |
 |-------|--------------------------|-------------------------------------------------------------------------------------|-----------|-----------------|------------|
 | PB-01 | Promociones              | Como cliente de Tambo, quiero consultar promociones vigentes desde una simulación de chatbot web para encontrar ofertas disponibles de forma rápida. |  Crítica | Sprint 1        | Pendiente  |
