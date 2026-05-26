@@ -2,30 +2,11 @@
 
 El Sprint Backlog organiza las tareas seleccionadas para cada sprint del proyecto. A diferencia del Product Backlog, que contiene todas las funcionalidades del producto, el Sprint Backlog detalla las actividades concretas que el equipo realizará durante un sprint específico.
 
----
-
-## Sprint 0 - Preparación del proyecto
-
-**Objetivo del Sprint 0:**  
-Organizar la base inicial del proyecto Tambot, definiendo documentación, historias de usuario, Product Backlog, estructura del repositorio, herramientas, tecnologías y planificación de los siguientes sprints.
-
-| ID | Tarea | Relación | Responsable | Prioridad | Estado |
-|---|---|---|---|---|---|
-| T-S0-01 | Elaborar documentación inicial del Sprint 0 | Documentación | Equipo | Alta | En proceso |
-| T-S0-02 | Organizar las historias de usuario del proyecto | HU-01 a HU-08 | Equipo | Alta | En proceso |
-| T-S0-03 | Organizar el Product Backlog priorizado | Product Backlog | Equipo | Alta | En proceso |
-| T-S0-04 | Definir la estructura base del repositorio | Repositorio | Equipo | Alta | En proceso |
-| T-S0-05 | Definir herramientas y tecnologías del proyecto | Tecnologías | Equipo | Media | En proceso |
-| T-S0-06 | Definir correctamente el README.md principal | README | Equipo | Media | En proceso |
-| T-S0-07 | Planificar Sprint 1 y Sprint 2 | Scrum | Equipo | Alta | Pendiente |
-| T-S0-08 | Registrar evidencias del Sprint 0 | Evidencias | Equipo | Media | Pendiente |
-
----
 
 ## Sprint 1 - Primera versión funcional
 
 **Objetivo del Sprint 1:**  
-Construir la primera versión funcional del chatbot web, permitiendo consultar promociones, buscar productos y agregar productos a un carrito básico.
+Construir la primera versión funcional del chatbot, permitiendo consultar promociones, buscar productos y agregar productos a un carrito básico.
 
 | ID | Tarea | Historia relacionada | Responsable | Prioridad | Estado |
 |---|---|---|---|---|---|
@@ -39,7 +20,6 @@ Construir la primera versión funcional del chatbot web, permitiendo consultar p
 | T-S1-08 | Probar consulta de promociones, búsqueda y carrito | HU-01 / HU-02 / HU-06 | Pruebas | Media | Pendiente |
 | T-S1-09 | Registrar evidencias del Sprint 1 | Evidencias | Equipo | Media | Pendiente |
 
----
 
 ## Sprint 2 - Recomendaciones, stock y cierre
 
@@ -59,8 +39,6 @@ Completar las funcionalidades de recomendaciones, validación de stock, resumen 
 | T-S2-09 | Documentar evidencias finales del proyecto | Evidencias | Equipo | Media | Pendiente |
 | T-S2-10 | Preparar demostración final del sistema | Demo | Equipo | Alta | Pendiente |
 
----
-
 ## Estados sugeridos
 
 | Estado | Significado |
@@ -70,12 +48,10 @@ Completar las funcionalidades de recomendaciones, validación de stock, resumen 
 | En revisión | La tarea fue terminada y está siendo revisada. |
 | Terminado | La tarea fue completada correctamente. |
 
----
 
 ## Resumen por sprint
 
 | Sprint | Enfoque principal | Resultado esperado |
 |---|---|---|
-| Sprint 0 | Organización y planificación | Base documental y técnica del proyecto |
 | Sprint 1 | Chatbot funcional básico | Interfaz, promociones, búsqueda y carrito |
 | Sprint 2 | Funcionalidades complementarias | Recomendaciones, stock, resumen, pruebas y demo final |
