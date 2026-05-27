@@ -15,7 +15,7 @@ Construir la primera versión funcional del chatbot, permitiendo consultar promo
 | T-S1-03 | Implementar el flujo básico de conversación | PB-01 / PB-02 | Frontend / Lógica | Alta | Pendiente |
 | T-S1-04 | Implementar consulta de promociones vigentes | PB-01 | Lógica / Datos | Crítica | Pendiente |
 | T-S1-05 | Implementar búsqueda de productos por nombre o categoría | PB-02 | Lógica / Datos | Alta | Pendiente |
-| T-S1-06 | Preparar datos de productos y promociones en Excel | PB-08 | Datos | Alta | Pendiente |
+| T-S1-06 | Preparar datos de productos y promociones en Excel | PB-01 / PB-02 | Datos | Alta | Pendiente |
 | T-S1-07 | Implementar carrito de compras básico | PB-04 | Frontend / Lógica | Alta | Pendiente |
 | T-S1-08 | Registrar evidencias del Sprint 1 | Evidencias | Equipo | Media | Pendiente |
 
