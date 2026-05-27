@@ -8,7 +8,7 @@ El Sprint Backlog organiza las tareas seleccionadas para cada sprint del proyect
 **Objetivo del Sprint 1:**  
 Construir la primera versión funcional del chatbot, permitiendo consultar promociones, buscar productos y agregar productos a un carrito básico.
 
-| ID | Tarea | Historia relacionada | Responsable | Prioridad | Estado |
+| ID | Tarea | Product Backlog relacionado | Responsable | Prioridad | Estado |
 |---|---|---|---|---|---|
 | T-S1-01 | Crear la pantalla principal del chatbot en HTML | HU-01 / HU-02 | Frontend | Alta | Pendiente |
 | T-S1-02 | Diseñar los estilos visuales del chatbot con CSS | HU-01 / HU-02 | Frontend | Alta | Pendiente |
@@ -26,7 +26,7 @@ Construir la primera versión funcional del chatbot, permitiendo consultar promo
 **Objetivo del Sprint 2:**  
 Completar las funcionalidades de recomendaciones, validación de stock, resumen de pedido, registro de interacciones, pruebas finales y documentación de la demo.
 
-| ID | Tarea | Historia relacionada | Responsable | Prioridad | Estado |
+| ID | Tarea | Product Backlog relacionado | Responsable | Prioridad | Estado |
 |---|---|---|---|---|---|
 | T-S2-01 | Implementar recomendaciones para clientes nuevos | HU-03 | IA / Datos | Alta | Pendiente |
 | T-S2-02 | Implementar recomendaciones basadas en historial simulado | HU-04 | IA / Datos | Alta | Pendiente |
