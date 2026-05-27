@@ -34,7 +34,7 @@ Completar las funcionalidades de recomendaciones, validación de stock, resumen 
 | T-S2-05 | Preparar archivo de stock en Excel | PB-06 / PB-08 | Datos | Media | Pendiente |
 | T-S2-06 | Implementar resumen final del pedido | PB-07 | Frontend / Lógica | Media | Pendiente |
 | T-S2-07 | Registrar interacciones básicas del chatbot | PB-08 | Datos / Lógica | Media | Pendiente |
-| T-S2-08 | Realizar pruebas del flujo completo | PB-01 a PB-08 | Pruebas | Alta | Pendiente |
+| T-S2-08 | Realizar pruebas de recomendaciones, stock, resumen y administración | PB-03 / PB-05 / PB-06 / PB-07 / PB-08 | Pruebas | Alta | Pendiente |
 | T-S2-09 | Documentar evidencias finales del proyecto | Evidencias | Equipo | Media | Pendiente |
 | T-S2-10 | Preparar demostración final del sistema | Demo | Equipo | Alta | Pendiente |
 
