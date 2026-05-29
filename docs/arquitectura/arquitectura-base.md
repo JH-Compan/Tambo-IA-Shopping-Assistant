@@ -105,7 +105,7 @@ Archivos Excel (.xlsx)
 
 ## 2.1 Diagrama de Arquitectura
 
-```mermaid
+``````mermaid
 graph TD
     %% ==========================================
     %% CAPA DE PRESENTACIÓN
@@ -156,36 +156,36 @@ graph TD
     %% ==========================================
     %% FLUJOS DE COMUNICACIÓN Y DEPENDENCIAS
     %% ==========================================
-    
-    %% Del Frontend a la API (Peticiones del Usuario y Admin)
-    A -->|1. Envía mensaje JSON| [span_11](start_span)C
-    B -->|Solicita datos analíticos| C[span_11](end_span)
 
-    %% De la API a los Controladores específicos
-    [span_12](start_span)C --> D[span_12](end_span)
-    [span_13](start_span)C --> E[span_13](end_span)
-    [span_14](start_span)C --> F[span_14](end_span)
+    %% Del Frontend a la API
+    A -->|1. Envía mensaje JSON| C
+    B -->|Solicita datos analíticos| C
 
-    %% De los Controladores a los Servicios de Negocio
-    [span_15](start_span)D --> G[span_15](end_span)
-    [span_16](start_span)E --> J[span_16](end_span)
-    [span_17](start_span)F --> H[span_17](end_span)
+    %% De la API a los Controladores
+    C --> D
+    C --> E
+    C --> F
+
+    %% De los Controladores a los Servicios
+    D --> G
+    E --> J
+    F --> H
 
     %% Relaciones internas entre Servicios
-    [span_18](start_span)G --> H[span_18](end_span)
-    [span_19](start_span)G --> I[span_19](end_span)
+    G --> H
+    G --> I
 
-    %% De los Servicios a la Capa de Repositorios (Acceso a Datos)
-    [span_20](start_span)H --> K[span_20](end_span)
+    %% Servicios a Repositorios
+    H --> K
     I --> K
     I --> L
-    [span_21](start_span)G --> L[span_21](end_span)
-    [span_22](start_span)G --> M[span_22](end_span)
-    [span_23](start_span)J --> L[span_23](end_span)
-    [span_24](start_span)J --> M[span_24](end_span)
-    [span_25](start_span)J --> N[span_25](end_span)
+    G --> L
+    G --> M
+    J --> L
+    J --> M
+    J --> N
 
-    %% De los Repositorios a las Tablas Físicas de Excel
+    %% Repositorios a Excel
     K --> O
     K --> P
     K --> Q
@@ -194,7 +194,7 @@ graph TD
     N --> S
 
     %% ==========================================
-    %% ESTILOS VISUALES (BRUTALISMO / MINIMALISTA)
+    %% ESTILOS VISUALES
     %% ==========================================
     style Frontend fill:#ffffff,stroke:#25D366,stroke-width:2px
     style Backend fill:#ffffff,stroke:#333333,stroke-width:2px
@@ -202,6 +202,8 @@ graph TD
     style Servicios fill:#fafafa,stroke:#666666,stroke-width:1px
     style Repositorios fill:#fafafa,stroke:#666666,stroke-width:1px
     style Persistencia fill:#ffffff,stroke:#217346,stroke-width:2px
+```
+
 ```
 
 # 3. Descripción de las Capas del Sistema
