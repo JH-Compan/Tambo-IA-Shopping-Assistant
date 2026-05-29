@@ -1,41 +1,53 @@
-"""
-ChatController
-Maneja las peticiones HTTP del chat: POST /api/chat
-"""
-from flask import Blueprint, request, jsonify
-from services import chatbot_service
+from flask import Blueprint, jsonify, request
+from services.chatbot_service import ChatbotService
+from repositories.recomendacion_repository import RecomendacionRepository
 
-chat_bp = Blueprint("chat", __name__)
+chat_bp = Blueprint("chat_bp", __name__)
+chatbot_service = ChatbotService()
+recomendacion_repository = RecomendacionRepository()
 
 
 @chat_bp.route("/api/chat", methods=["POST"])
 def chat():
-    """
-    Recibe un mensaje del usuario y retorna la respuesta del chatbot.
+    data = request.get_json()
 
-    Body esperado (JSON):
-    {
-        "sender_phone": "999888777",
-        "message_body": "Quiero ver las ofertas de hoy",
-        "timestamp": "2026-05-25T01:15:00Z"   ← opcional
-    }
-    """
-    datos = request.get_json()
+    user_id = data.get("user_id", "USR001")
+    mensaje = data.get("mensaje")
+    conversation_id = data.get("conversation_id")
 
-    if not datos:
-        return jsonify({"error": "Se esperaba un cuerpo JSON"}), 400
-
-    telefono = datos.get("sender_phone", "").strip()
-    mensaje  = datos.get("message_body", "").strip()
-
-    if not telefono:
-        return jsonify({"error": "El campo 'sender_phone' es obligatorio"}), 400
     if not mensaje:
-        return jsonify({"error": "El campo 'message_body' es obligatorio"}), 400
+        return jsonify({"error": "El campo 'mensaje' es obligatorio"}), 400
 
-    respuesta = chatbot_service.procesar_mensaje(telefono, mensaje)
+    resultado = chatbot_service.procesar_mensaje(
+        user_id=user_id,
+        mensaje=mensaje,
+        conversation_id=conversation_id
+    )
 
-    return jsonify({
-        "recipient_phone": telefono,
-        **respuesta
-    }), 200
+    return jsonify(resultado), 200
+
+
+@chat_bp.route("/api/feedback", methods=["POST"])
+def feedback():
+    data = request.get_json()
+
+    conversation_id = data.get("conversation_id")
+    rating = data.get("rating")
+    comment = data.get("comment")
+
+    if not conversation_id:
+        return jsonify({"error": "El campo 'conversation_id' es obligatorio"}), 400
+
+    if not rating:
+        return jsonify({"error": "El campo 'rating' es obligatorio"}), 400
+
+    if rating < 1 or rating > 5:
+        return jsonify({"error": "El rating debe estar entre 1 y 5"}), 400
+
+    feedback_guardado = recomendacion_repository.guardar_feedback(
+        conversation_id=conversation_id,
+        rating=rating,
+        comment=comment
+    )
+
+    return jsonify(feedback_guardado), 201
