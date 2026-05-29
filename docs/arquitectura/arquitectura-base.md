@@ -202,7 +202,7 @@ graph TD
     style Servicios fill:#fafafa,stroke:#666666,stroke-width:1px
     style Repositorios fill:#fafafa,stroke:#666666,stroke-width:1px
     style Persistencia fill:#ffffff,stroke:#217346,stroke-width:2px
-
+```
 ---
 
 # 3. Descripción de las Capas del Sistema
