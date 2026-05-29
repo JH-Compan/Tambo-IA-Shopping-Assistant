@@ -4,12 +4,18 @@ import os
 # Asegurar que Python encuentre los módulos internos (controllers, services, repositories)
 sys.path.insert(0, os.path.dirname(__file__))
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 
 from controllers.chat_controller     import chat_bp
 from controllers.producto_controller import producto_bp
 from controllers.admin_controller    import admin_bp
+
+# ─────────────────────────────────────────────
+# Rutas base del proyecto
+# ─────────────────────────────────────────────
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
 # ─────────────────────────────────────────────
 # Crear la aplicación Flask
@@ -28,14 +34,30 @@ app.register_blueprint(admin_bp)
 
 
 # ─────────────────────────────────────────────
-# Ruta raíz — confirma que el servidor está activo
+# Frontend integrado
 # ─────────────────────────────────────────────
 @app.route("/", methods=["GET"])
-def index():
+def frontend():
+    """Sirve la interfaz web integrada con el backend Flask."""
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
+
+@app.route("/frontend/<path:filename>", methods=["GET"])
+def frontend_assets(filename):
+    """Permite servir archivos estáticos dentro de frontend/ si se necesitan."""
+    return send_from_directory(FRONTEND_DIR, filename)
+
+
+# ─────────────────────────────────────────────
+# Ruta de salud/API — confirma que el servidor está activo
+# ─────────────────────────────────────────────
+@app.route("/api", methods=["GET"])
+def api_index():
     return jsonify({
         "sistema": "Tambot - Tambo+ Shopping Assistant",
         "estado": "activo",
         "version": "1.0.0",
+        "frontend": "http://localhost:5000/",
         "endpoints": {
             "POST /api/chat":                    "Enviar mensaje al chatbot",
             "GET  /api/productos":               "Listar todos los productos",
@@ -66,6 +88,7 @@ def error_interno(e):
 if __name__ == "__main__":
     print("=" * 50)
     print("  🛒  Tambot Backend iniciando...")
-    print("  📡  URL: http://localhost:5000")
+    print("  📡  Frontend: http://localhost:5000/")
+    print("  🔎  API info: http://localhost:5000/api")
     print("=" * 50)
     app.run(debug=True, host="0.0.0.0", port=5000)
