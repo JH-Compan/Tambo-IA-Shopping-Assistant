@@ -24,14 +24,21 @@ class RecomendacionRepository:
             "created_at": datetime.now().isoformat(timespec="seconds")
         }
 
-        response = (
-            supabase
-            .table("ai_user_interactions")
-            .insert(nueva_interaccion)
-            .execute()
-        )
+        try:
+            response = (
+                supabase
+                .table("ai_user_interactions")
+                .insert(nueva_interaccion)
+                .execute()
+            )
 
-        return response.data[0]
+            if response.data:
+                return response.data[0]
+
+        except Exception as error:
+            print(f"[WARN] No se pudo guardar interacción en Supabase: {error}")
+
+        return nueva_interaccion
 
     def guardar_recomendacion_producto(
         self,
@@ -52,14 +59,21 @@ class RecomendacionRepository:
             "created_at": datetime.now().isoformat(timespec="seconds")
         }
 
-        response = (
-            supabase
-            .table("ai_recommendations")
-            .insert(nueva_recomendacion)
-            .execute()
-        )
+        try:
+            response = (
+                supabase
+                .table("ai_recommendations")
+                .insert(nueva_recomendacion)
+                .execute()
+            )
 
-        return response.data[0]
+            if response.data:
+                return response.data[0]
+
+        except Exception as error:
+            print(f"[WARN] No se pudo guardar recomendación en Supabase: {error}")
+
+        return nueva_recomendacion
 
     def guardar_feedback(self, conversation_id, rating, comment=None):
         nuevo_feedback = {
@@ -70,11 +84,18 @@ class RecomendacionRepository:
             "created_at": datetime.now().isoformat(timespec="seconds")
         }
 
-        response = (
-            supabase
-            .table("ai_feedback")
-            .insert(nuevo_feedback)
-            .execute()
-        )
+        try:
+            response = (
+                supabase
+                .table("ai_feedback")
+                .insert(nuevo_feedback)
+                .execute()
+            )
 
-        return response.data[0]
+            if response.data:
+                return response.data[0]
+
+        except Exception as error:
+            print(f"[WARN] No se pudo guardar feedback en Supabase: {error}")
+
+        return nuevo_feedback

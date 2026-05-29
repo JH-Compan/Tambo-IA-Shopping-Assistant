@@ -14,14 +14,22 @@ class ConversacionRepository:
             "ended_at": None
         }
 
-        response = (
-            supabase
-            .table("chat_conversations")
-            .insert(nueva_conversacion)
-            .execute()
-        )
+        try:
+            response = (
+                supabase
+                .table("chat_conversations")
+                .insert(nueva_conversacion)
+                .execute()
+            )
 
-        return response.data[0]
+            if response.data:
+                return response.data[0]
+
+        except Exception as error:
+            print(f"[WARN] No se pudo guardar la conversación en Supabase: {error}")
+
+        # Fallback para que el chatbot siga funcionando aunque Supabase bloquee INSERT por RLS.
+        return nueva_conversacion
 
     def guardar_mensaje(self, conversation_id, sender_type, content, intent=None):
         nuevo_mensaje = {
@@ -33,37 +41,55 @@ class ConversacionRepository:
             "created_at": datetime.now().isoformat(timespec="seconds")
         }
 
-        response = (
-            supabase
-            .table("chat_messages")
-            .insert(nuevo_mensaje)
-            .execute()
-        )
+        try:
+            response = (
+                supabase
+                .table("chat_messages")
+                .insert(nuevo_mensaje)
+                .execute()
+            )
 
-        return response.data[0]
+            if response.data:
+                return response.data[0]
+
+        except Exception as error:
+            print(f"[WARN] No se pudo guardar el mensaje en Supabase: {error}")
+
+        # Fallback: no detiene la respuesta del chatbot si Supabase no permite escribir.
+        return nuevo_mensaje
 
     def obtener_historial(self, conversation_id):
-        response = (
-            supabase
-            .table("chat_messages")
-            .select("*")
-            .eq("conversation_id", conversation_id)
-            .order("created_at")
-            .execute()
-        )
+        try:
+            response = (
+                supabase
+                .table("chat_messages")
+                .select("*")
+                .eq("conversation_id", conversation_id)
+                .order("created_at")
+                .execute()
+            )
 
-        return response.data
+            return response.data
+
+        except Exception as error:
+            print(f"[WARN] No se pudo obtener historial desde Supabase: {error}")
+            return []
 
     def cerrar_conversacion(self, conversation_id):
-        response = (
-            supabase
-            .table("chat_conversations")
-            .update({
-                "status": "closed",
-                "ended_at": datetime.now().isoformat(timespec="seconds")
-            })
-            .eq("id", conversation_id)
-            .execute()
-        )
+        try:
+            response = (
+                supabase
+                .table("chat_conversations")
+                .update({
+                    "status": "closed",
+                    "ended_at": datetime.now().isoformat(timespec="seconds")
+                })
+                .eq("id", conversation_id)
+                .execute()
+            )
 
-        return response.data
+            return response.data
+
+        except Exception as error:
+            print(f"[WARN] No se pudo cerrar la conversación en Supabase: {error}")
+            return []
