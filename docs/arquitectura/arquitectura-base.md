@@ -106,38 +106,93 @@ Archivos Excel (.xlsx)
 ## 2.1 Diagrama de Arquitectura
 
 ```mermaid
-graph TD
-    subgraph Capa_Presentacion [1. Capa de Frontend / Presentación]
-        A[Interfaz Web Tipo Chat WhatsApp] --> B[Simulación de Mensajes Interactivos]
-        B --> C[Captura de Inputs de Usuario]
-    end
+sequenceDiagram
+    autonumber
+    actor Cliente as Cliente (Interfaz Web)
+    actor Admin as Administrador (Dashboard)
+    participant Front_Chat as Simulador WhatsApp (HTML/CSS/JS)
+    participant Front_Admin as Panel de Control (Bootstrap/Chart.js)
+    participant API as API Flask (app.py / Controladores)
+    participant Chat_Serv as ChatbotService (.py)
+    participant Rec_Serv as RecomendacionService (.py)
+    participant Met_Serv as MetricaService (.py)
+    participant DB as Persistencia (Archivos Excel .xlsx)
 
-    subgraph Capa_Logica [2. Capa de Lógica del Sistema / Backend]
-        D[Controlador de Flujo Conversacional .py] --> E[Motor de Búsqueda de Productos]
-        D --> F[Módulo de Consulta de Promociones]
-        D --> G[Algoritmo de Recomendaciones según Historial]
-    end
+    %% ==========================================
+    %% FLUJO 1: INTERACCIÓN Y RECOMENDACIÓN DEL CLIENTE
+    %% ==========================================
+    Note over Cliente, DB: FLUJO 1: INTERACCIÓN CON EL CHATBOT Y RECOMENDACIÓN COMERCIAL
 
-    subgraph Capa_Datos [3. Capa de Datos Simulados / Persistencia]
-        H[(Productos.xlsx)]
-        I[(Promociones.xlsx)]
-        J[(Stock.xlsx)]
-        K[(Historial_Compras.xlsx)]
-        L[(Interacciones_Chatbot.xlsx)]
-    end
+    Cliente->>Front_Chat: Inicia conversación o ingresa identificador (Celular/DNI)
+    activate Front_Chat
+    Front_Chat->>API: HTTP POST /api/chat {user_identifier, user_message}
+    activate API
 
-    %% Conexiones e intercambio de información
-    A <-->|Mensajes de Texto / Eventos JSON| D
-    E <--->|Lectura de registros| H
-    F <--->|Filtro de ofertas vigentes| I
-    G <--->|Cruce de DNI / Celular| K
-    G <--->|Validación de disponibilidad| J
-    D --->|Log de auditoría| L
+    API->>Chat_Serv: procesar_mensaje(user_message, user_identifier)
+    activate Chat_Serv
+    
+    Chat_Serv->>DB: Consulta 'Historial_Compras.xlsx' (Buscar perfil del usuario)
+    activate DB
+    DB-->>Chat_Serv: Retorna compras anteriores y segmento de cliente
+    deactivate DB
 
-    %% Estilos de las cajas
-    style Capa_Presentacion fill:#ffffff,stroke:#25D366,stroke-width:2px
-    style Capa_Logica fill:#ffffff,stroke:#333333,stroke-width:1px
-    style Capa_Datos fill:#ffffff,stroke:#217346,stroke-width:2px
+    Chat_Serv->>Chat_Serv: Detecta intención (Palabras clave: "oferta", "bebida", "snack")
+    
+    Chat_Serv->>Rec_Serv: obtener_recomendacion(perfil_usuario, intencion_detectada)
+    activate Rec_Serv
+    
+    Rec_Serv->>DB: Consulta 'Promociones.xlsx' y 'Stock.xlsx'
+    activate DB
+    DB-->>Rec_Serv: Lista de ofertas vigentes con existencias físicas en tienda
+    deactivate DB
+    
+    Rec_Serv->>Rec_Serv: Aplica reglas de negocio (Cruza perfil histórico con stock disponible)
+    Rec_Serv-->>Chat_Serv: Retorna producto o combo sugerido para el cliente
+    deactivate Rec_Serv
+
+    Note over Chat_Serv: Opcional: El módulo procesa el texto final con la API del LLM para darle empatía
+
+    Chat_Serv->>DB: Registrar traza en 'Interacciones_Chatbot.xlsx' (Auditoría/Logs)
+    activate DB
+    DB-->>Chat_Serv: Confirmación de guardado de log
+    deactivate DB
+
+    Chat_Serv-->>API: Retorna objeto estructurado con la respuesta formateada de WhatsApp
+    deactivate Chat_Serv
+    API-->>Front_Chat: Respuesta HTTP 200 OK (Payload JSON con texto y opciones interactivas)
+    deactivate API
+
+    Front_Chat-->>Cliente: Renderiza globos de diálogo y botones de respuesta rápida en pantalla
+    deactivate Front_Chat
+
+    %% ==========================================
+    %% FLUJO 2: MONITOREO DEL ADMINISTRADOR
+    %% ==========================================
+    Note over Admin, DB: FLUJO 2: MONITOREO ADMINISTRATIVO Y GENERACIÓN DE MÉTRICAS
+
+    Admin ->>Front_Admin: Accede a la URL del Dashboard de administración
+    activate Front_Admin
+    Front_Admin->>API: HTTP GET /api/metricas (Solicitud asíncrona)
+    activate API
+
+    API->>Met_Serv: obtener_estadisticas_globales()
+    activate Met_Serv
+
+    Met_Serv->>DB: Escanea registros consolidados en 'Interacciones_Chatbot.xlsx' y 'Productos.xlsx'
+    activate DB
+    DB-->>Met_Serv: Retorna registros crudos de mensajes, productos buscados y preguntas repetidas
+    deactivate DB
+
+    Met_Serv->>Met_Serv: Computa métricas (Total conversaciones, productos más consultados, categorías top)
+    Met_Serv-->>API: Retorna diccionarios de datos estadísticos procesados
+    deactivate Met_Serv
+
+    API-->>Front_Admin: Respuesta HTTP 200 OK (JSON con matrices de datos analíticos)
+    deactivate API
+
+    Front_Admin->>Front_Admin: Invoca funciones de Chart.js para dibujar gráficos de barras y tarjetas métricas
+    Front_Admin-->>Admin: Muestra el panel visual actualizado con las tablas de control y auditoría
+    deactivate Front_Admin
 ```
 
 ---
