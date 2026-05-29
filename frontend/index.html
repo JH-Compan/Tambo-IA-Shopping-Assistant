@@ -3,42 +3,513 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tambot - Asistente de compras</title>
-  <link rel="stylesheet" href="css/styles.css" />
+  <title>TamboBot IA - Integrado</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            tambo: {
+              purple: '#4F1D7C',
+              yellow: '#FFCC00',
+              soft: '#F3EEF8'
+            },
+            wa: {
+              teal: '#008069',
+              dark: '#111b21',
+              bg: '#efeae2',
+              out: '#d9fdd3',
+              in: '#ffffff'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .wa-bg { background-image:url('https://i.imgur.com/UYiroys.png'); }
+    .no-scrollbar::-webkit-scrollbar { display:none; }
+    .no-scrollbar { scrollbar-width:none; }
+  </style>
 </head>
-<body>
-  <main class="app">
-    <section class="chat-card">
-      <header class="chat-header">
-        <div>
-          <h1>Tambot</h1>
-          <p>Asistente de compras simulado para Tambo+</p>
+<body class="bg-[#0b141a] min-h-screen flex justify-center items-center overflow-hidden">
+  <div class="w-full max-w-6xl h-screen md:h-[95vh] md:rounded-2xl overflow-hidden shadow-2xl bg-white grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_340px]">
+
+    <section class="flex flex-col min-h-0">
+      <header class="bg-wa-teal text-white px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-full bg-tambo-purple flex items-center justify-center border-2 border-tambo-yellow font-bold text-tambo-yellow">
+            T+
+          </div>
+          <div>
+            <h1 class="font-bold leading-tight">TamboBot</h1>
+            <p id="bot-status" class="text-xs text-green-100">conectando al backend...</p>
+          </div>
         </div>
-        <span class="status">Demo Sprint 1</span>
+        <div class="flex items-center gap-2">
+          <button onclick="showProducts()" class="text-xs bg-[#0b5c4b] px-3 py-1 rounded-lg font-bold hover:scale-105 transition">Productos</button>
+          <button onclick="resetAll()" class="text-xs bg-[#0b5c4b] px-3 py-1 rounded-lg font-bold hover:scale-105 transition">Reiniciar</button>
+        </div>
       </header>
 
-      <section id="chatMessages" class="chat-messages" aria-live="polite">
-        <article class="message bot">
-          <p>Hola, soy Tambot. Puedo ayudarte a consultar promociones, buscar productos o armar un carrito simulado.</p>
-        </article>
-      </section>
+      <main id="chat-box" class="flex-1 overflow-y-auto p-4 wa-bg bg-wa-bg flex flex-col gap-3 no-scrollbar">
+        <div class="self-center bg-[#fff3c4] text-[#6b5b22] text-[11px] px-3 py-2 rounded-lg text-center shadow">
+          Frontend integrado con backend Flask. Chatbot por reglas, sin LLM.
+        </div>
+      </main>
 
-      <form id="chatForm" class="chat-form">
-        <input id="chatInput" type="text" placeholder="Escribe: promociones, buscar gaseosa, carrito..." autocomplete="off" />
-        <button type="submit">Enviar</button>
-      </form>
+      <footer class="bg-[#f0f2f5] p-3 flex items-center gap-2 border-t">
+        <input id="chat-input" type="text" placeholder="Escribe: promociones, buscar gaseosa, recomendaciones..." class="flex-1 rounded-full px-4 py-2 text-sm outline-none border" onkeypress="handleKey(event)" />
+        <button onclick="processMessage()" class="bg-wa-teal text-white w-11 h-11 rounded-full hover:scale-105 transition" title="Enviar">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </footer>
     </section>
 
-    <aside class="cart-card">
-      <h2>Carrito</h2>
-      <ul id="cartItems"></ul>
-      <p class="cart-total">Total: S/ <span id="cartTotal">0.00</span></p>
-    </aside>
-  </main>
+    <aside class="hidden md:flex flex-col border-l bg-gray-50 min-h-0">
+      <div class="p-4 border-b bg-white">
+        <h2 class="font-bold text-gray-800">Panel de compra</h2>
+        <p class="text-xs text-gray-500">Carrito local + datos del backend</p>
+      </div>
 
-  <script src="js/recomendaciones.js"></script>
-  <script src="js/carrito.js"></script>
-  <script src="js/chatbot.js"></script>
-  <script src="js/app.js"></script>
+      <div class="p-4 overflow-y-auto flex-1 no-scrollbar">
+        <section class="mb-5">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-bold text-sm text-gray-700">Carrito</h3>
+            <span id="cart-count" class="text-xs bg-tambo-purple text-white px-2 py-1 rounded-full">0</span>
+          </div>
+          <div id="cart-items" class="space-y-2 text-sm"></div>
+          <div class="mt-3 p-3 rounded-xl bg-white border font-bold flex justify-between">
+            <span>Total</span>
+            <span>S/ <span id="cart-total">0.00</span></span>
+          </div>
+          <button onclick="finishPurchase()" class="mt-3 w-full bg-wa-teal text-white rounded-xl py-2 text-sm font-bold hover:opacity-90">Finalizar compra</button>
+        </section>
+
+        <section class="mb-5">
+          <h3 class="font-bold text-sm text-gray-700 mb-2">Métricas</h3>
+          <div id="metrics-box" class="text-xs text-gray-600 bg-white border rounded-xl p-3 space-y-1">Cargando métricas...</div>
+        </section>
+
+        <section>
+          <h3 class="font-bold text-sm text-gray-700 mb-2">Productos cargados</h3>
+          <div id="products-box" class="text-xs text-gray-600 bg-white border rounded-xl p-3">Cargando productos...</div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+<script>
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:5000' : 'http://localhost:5000';
+const DEFAULT_PHONE = '999888777';
+
+let products = [];
+let metrics = null;
+let cart = [];
+
+window.onload = async () => {
+  await bootstrap();
+};
+
+async function bootstrap(){
+  botMessage(`
+    ¡Hola! Bienvenido a <strong>Tambo+</strong><br><br>
+    Soy <strong>TamboBot</strong>, tu asistente de compras simulado.<br><br>
+    Puedo ayudarte a buscar productos, consultar promociones, recibir recomendaciones y armar tu carrito.
+  `,[
+    { id:'promociones', title:'🎁 Ver promociones' },
+    { id:'buscar_bebidas', title:'🥤 Buscar bebidas' },
+    { id:'buscar_snacks', title:'🍫 Buscar snacks' },
+    { id:'recomendacion', title:'⭐ Recomendaciones' },
+    { id:'carrito', title:'🛒 Ver carrito' }
+  ]);
+
+  await Promise.allSettled([
+    loadProducts(),
+    loadMetrics()
+  ]);
+}
+
+async function api(path, options = {}){
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  });
+  if(!response.ok){
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status}: ${text}`);
+  }
+  return response.json();
+}
+
+async function loadProducts(){
+  try{
+    products = await api('/api/productos');
+    setStatus('backend conectado');
+    renderProductsPanel();
+  }catch(error){
+    setStatus('backend no disponible');
+    renderProductsPanel(error.message);
+    botMessage(`
+      No pude conectarme al backend Flask.<br><br>
+      Verifica que esté ejecutándose con:<br>
+      <code>cd python</code><br>
+      <code>python app.py</code>
+    `);
+  }
+}
+
+async function loadMetrics(){
+  try{
+    metrics = await api('/api/metricas');
+    renderMetrics();
+  }catch(error){
+    document.getElementById('metrics-box').innerHTML = 'No se pudieron cargar las métricas.';
+  }
+}
+
+function handleKey(event){
+  if(event.key === 'Enter'){
+    processMessage();
+  }
+}
+
+async function processMessage(){
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if(!text) return;
+
+  userMessage(text);
+  input.value = '';
+
+  await routeUserText(text);
+}
+
+async function routeUserText(text){
+  const q = normalize(text);
+
+  if(q.includes('carrito') || q.includes('ver compra')){
+    showCart();
+    return;
+  }
+
+  if(q.includes('finalizar') || q.includes('pagar') || q.includes('cerrar compra')){
+    finishPurchase();
+    return;
+  }
+
+  if(q.startsWith('comprar ') || q.startsWith('agregar ')){
+    addProductByText(q);
+    return;
+  }
+
+  setStatus('procesando...');
+  try{
+    const data = await api('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        sender_phone: DEFAULT_PHONE,
+        message_body: text,
+        timestamp: new Date().toISOString()
+      })
+    });
+    renderBotResponse(data);
+    await loadMetrics();
+  }catch(error){
+    botMessage(`No pude procesar tu mensaje con el backend.<br><br>${escapeHtml(error.message)}`);
+  }finally{
+    setStatus('backend conectado');
+  }
+}
+
+function renderBotResponse(data){
+  const options = Array.isArray(data.options) ? data.options : [];
+  botMessage(formatBody(data.body_text || 'Sin respuesta.'), options);
+}
+
+function showProducts(){
+  if(!products.length){
+    botMessage('Todavía no hay productos cargados desde el backend.');
+    return;
+  }
+
+  const items = products.slice(0, 12).map(p => `
+    • <strong>${escapeHtml(p.nombre)}</strong> — S/ ${Number(p.precio || 0).toFixed(2)}<br>
+    Categoría: ${escapeHtml(p.categoria || 'sin categoría')} | Stock: ${Number(p.stock || 0)}
+  `).join('<br><br>');
+
+  const buttons = products.slice(0, 8)
+    .filter(p => Number(p.stock || 0) > 0)
+    .map(p => ({ id:`prod_${p.id_producto}`, title:`Agregar ${p.nombre}` }));
+
+  botMessage(`<strong>Productos disponibles</strong><br><br>${items}`, buttons);
+}
+
+function addProductByText(query){
+  const product = products.find(p => {
+    const name = normalize(p.nombre || '');
+    const category = normalize(p.categoria || '');
+    return query.includes(name) || name.split(' ').some(part => part.length > 3 && query.includes(part)) || query.includes(category);
+  });
+
+  if(!product){
+    botMessage('No encontré ese producto en el catálogo cargado desde el backend.');
+    return;
+  }
+
+  addProductToCart(product);
+}
+
+function addProductToCart(product){
+  const stock = Number(product.stock || 0);
+  const currentQuantity = cart.filter(item => item.id_producto === product.id_producto).length;
+
+  if(stock <= currentQuantity){
+    botMessage(`${escapeHtml(product.nombre)} no tiene más stock disponible para agregar.`);
+    return;
+  }
+
+  cart.push({ ...product });
+  renderCart();
+
+  botMessage(`
+    <strong>${escapeHtml(product.nombre)}</strong> agregado al carrito.<br><br>
+    Productos actuales: ${cart.length}<br>
+    Total parcial: S/ ${calculateTotal().toFixed(2)}
+  `,[
+    { id:'carrito', title:'🛒 Ver carrito' },
+    { id:'finalizar', title:'✅ Finalizar compra' },
+    { id:'promociones', title:'🎁 Ver promociones' },
+    { id:'recomendacion', title:'⭐ Recomendaciones' }
+  ]);
+}
+
+function showCart(){
+  if(!cart.length){
+    botMessage('Tu carrito está vacío.');
+    return;
+  }
+
+  const items = cart.map((p, i) => `${i + 1}. ${escapeHtml(p.nombre)} — S/ ${Number(p.precio || 0).toFixed(2)}`).join('<br>');
+  botMessage(`
+    <strong>🛒 Tu carrito actual</strong><br><br>
+    ${items}<br><br>
+    <strong>Total:</strong> S/ ${calculateTotal().toFixed(2)}
+  `,[
+    { id:'finalizar', title:'✅ Finalizar compra' },
+    { id:'promociones', title:'🎁 Ver promociones' }
+  ]);
+}
+
+function finishPurchase(){
+  if(!cart.length){
+    botMessage('No tienes productos en el carrito.');
+    return;
+  }
+
+  const code = 'TB-' + Math.floor(10000 + Math.random() * 90000);
+  const items = cart.map((p, i) => `${i + 1}. ${escapeHtml(p.nombre)} — S/ ${Number(p.precio || 0).toFixed(2)}`).join('<br>');
+
+  botMessage(`
+    <strong>TICKET DIGITAL TAMBO+</strong><br><br>
+    ${items}<br><br>
+    --------------------------------<br>
+    <strong>Total:</strong> S/ ${calculateTotal().toFixed(2)}<br><br>
+    Código de recojo:<br>
+    <strong>${code}</strong><br><br>
+    Gracias por comprar en Tambo+.
+  `,[
+    { id:'promociones', title:'🎁 Ver promociones' },
+    { id:'buscar_bebidas', title:'🥤 Buscar bebidas' }
+  ]);
+
+  cart = [];
+  renderCart();
+}
+
+function calculateTotal(){
+  return cart.reduce((sum, item) => sum + Number(item.precio || 0), 0);
+}
+
+function renderCart(){
+  const box = document.getElementById('cart-items');
+  const count = document.getElementById('cart-count');
+  const total = document.getElementById('cart-total');
+
+  count.textContent = cart.length;
+  total.textContent = calculateTotal().toFixed(2);
+
+  if(!cart.length){
+    box.innerHTML = '<p class="text-xs text-gray-500">Sin productos agregados.</p>';
+    return;
+  }
+
+  box.innerHTML = cart.map((p, index) => `
+    <div class="bg-white border rounded-xl p-3 flex justify-between gap-2">
+      <div>
+        <p class="font-bold text-gray-800">${escapeHtml(p.nombre)}</p>
+        <p class="text-xs text-gray-500">S/ ${Number(p.precio || 0).toFixed(2)}</p>
+      </div>
+      <button onclick="removeFromCart(${index})" class="text-red-500 text-xs font-bold">Quitar</button>
+    </div>
+  `).join('');
+}
+
+function removeFromCart(index){
+  cart.splice(index, 1);
+  renderCart();
+}
+
+function renderProductsPanel(error){
+  const box = document.getElementById('products-box');
+  if(error){
+    box.innerHTML = `<span class="text-red-600">${escapeHtml(error)}</span>`;
+    return;
+  }
+  if(!products.length){
+    box.innerHTML = 'Sin productos cargados.';
+    return;
+  }
+  const available = products.filter(p => Number(p.stock || 0) > 0).length;
+  box.innerHTML = `
+    <p>Total productos: <strong>${products.length}</strong></p>
+    <p>Con stock: <strong>${available}</strong></p>
+    <p>Agotados: <strong>${products.length - available}</strong></p>
+  `;
+}
+
+function renderMetrics(){
+  const box = document.getElementById('metrics-box');
+  if(!metrics){
+    box.innerHTML = 'Sin métricas.';
+    return;
+  }
+  box.innerHTML = `
+    <p>Interacciones: <strong>${metrics.total_interacciones ?? 0}</strong></p>
+    <p>Clientes únicos: <strong>${metrics.clientes_unicos ?? 0}</strong></p>
+    <p>Promociones activas: <strong>${metrics.promociones_activas ?? 0}</strong></p>
+    <p>Productos catálogo: <strong>${metrics.productos_en_catalogo ?? 0}</strong></p>
+    <p>Con stock: <strong>${metrics.productos_con_stock ?? 0}</strong></p>
+    <p>Agotados: <strong>${metrics.productos_agotados ?? 0}</strong></p>
+  `;
+}
+
+function userMessage(text){
+  appendBubble(escapeHtml(text), true);
+}
+
+function botMessage(text, buttons = []){
+  appendBubble(text, false, buttons);
+}
+
+function appendBubble(text, isUser, buttons = []){
+  const chat = document.getElementById('chat-box');
+  const div = document.createElement('div');
+
+  div.className = `max-w-[85%] p-3 rounded-xl shadow text-sm ${isUser ? 'self-end bg-wa-out rounded-br-none' : 'self-start bg-wa-in rounded-bl-none'}`;
+
+  let html = `<div class="leading-relaxed text-gray-800">${text}</div>`;
+
+  if(buttons.length > 0 && !isUser){
+    html += '<div class="mt-3 border-t pt-3 flex flex-col gap-2">';
+    buttons.forEach(button => {
+      const safeTitle = escapeHtml(button.title || button.id || 'Opción');
+      const safeId = escapeHtml(button.id || button.title || '');
+      html += `
+        <button onclick="quick('${safeId}', '${safeTitle.replace(/'/g, '\\&#39;')}')" class="bg-gray-100 hover:bg-gray-200 transition rounded-lg py-2 px-3 text-xs font-bold text-purple-900 text-left">
+          ${safeTitle}
+        </button>
+      `;
+    });
+    html += '</div>';
+  }
+
+  html += `<div class="text-[10px] text-right text-gray-400 mt-2">${timeNow()}</div>`;
+
+  div.innerHTML = html;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function quick(id, title){
+  if(id === 'carrito'){
+    userMessage(title);
+    showCart();
+    return;
+  }
+  if(id === 'finalizar'){
+    userMessage(title);
+    finishPurchase();
+    return;
+  }
+  if(id === 'buscar_bebidas'){
+    userMessage(title);
+    await routeUserText('buscar bebidas');
+    return;
+  }
+  if(id === 'buscar_snacks'){
+    userMessage(title);
+    await routeUserText('buscar snacks');
+    return;
+  }
+  if(id.startsWith('prod_')){
+    userMessage(title);
+    const productId = Number(id.replace('prod_', ''));
+    const product = products.find(p => Number(p.id_producto) === productId);
+    if(product){
+      addProductToCart(product);
+    }else{
+      botMessage('No encontré ese producto en el catálogo local. Actualiza productos e intenta otra vez.');
+    }
+    return;
+  }
+
+  userMessage(title);
+  await routeUserText(title);
+}
+
+function formatBody(text){
+  return escapeHtml(String(text))
+    .replace(/\n/g, '<br>')
+    .replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+}
+
+function normalize(text){
+  return String(text)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function escapeHtml(value){
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function timeNow(){
+  return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
+
+function setStatus(text){
+  document.getElementById('bot-status').innerText = text;
+}
+
+function resetAll(){
+  cart = [];
+  renderCart();
+  const chat = document.getElementById('chat-box');
+  chat.innerHTML = '';
+  bootstrap();
+}
+
+renderCart();
+</script>
 </body>
 </html>
