@@ -107,101 +107,50 @@ Archivos Excel (.xlsx)
 
 ```mermaid
 graph TD
-    %% ==========================================
-    %% CAPA DE PRESENTACIÓN
-    %% ==========================================
-    subgraph Frontend [1. Capa de Presentación / Interfaces Web]
-        A[Interfaz Web Cliente<br/>Chat simulado tipo WhatsApp]
-        B[Dashboard Administrativo<br/>Productos, conversaciones y métricas]
+    subgraph Capa_Presentacion [1. Capa de Frontend / Presentación]
+        A[Interfaz Web Tipo Chat WhatsApp] --> B[Simulación de Mensajes Interactivos]
+        B --> C[Captura de Inputs de Usuario]
     end
 
-    %% ==========================================
-    %% BACKEND MONOLÍTICO FLASK
-    %% ==========================================
-    subgraph Backend [2. Aplicación Monolítica Flask]
-        C[API Flask<br/>Rutas HTTP / Endpoints JSON]
+    subgraph Capa_Logica [2. Capa de Lógica del Sistema / Backend]
+        D[Controlador de Flujo Conversacional .py]
 
-        subgraph Controladores [Capa de Controladores / Enrutamiento]
-            D[ChatController<br/>/api/chat]
-            E[AdminController<br/>/api/metricas]
-            F[ProductoController<br/>/api/productos]
-        end
+        D --> E[Motor de Búsqueda de Productos]
+        D --> F[Módulo de Consulta de Promociones]
+        D --> G[Algoritmo de Recomendaciones según Historial]
 
-        subgraph Servicios [Capa de Servicios / Lógica de Negocio]
-            G[ChatbotService<br/>Procesamiento conversacional e intenciones]
-            H[ProductoService<br/>Consulta y filtrado de catálogo]
-            I[RecomendacionService<br/>Reglas básicas y cruce de datos]
-            J[MetricaService<br/>Consultas frecuentes y estadísticas]
-        end
+        D --> M[Motor LLM / IA Conversacional]
 
-        subgraph Repositorios [Capa de Acceso a Datos / Repositorios]
-            K[ProductoRepository<br/>Lector de Catálogo y Stock]
-            L[ConversacionRepository<br/>Gestor de Historial CRM]
-            M[MensajeRepository<br/>Gestor de Logs del Chat]
-            N[MetricaRepository<br/>Acumulador de Estadísticas]
-        end
+        M --> G
+        M --> E
+        M --> F
     end
 
-    %% ==========================================
-    %% CAPA DE PERSISTENCIA
-    %% ==========================================
-    subgraph Persistencia [3. Capa de Datos / Persistencia Local Excel]
-        O[(Productos.xlsx<br/>Catálogo Maestro)]
-        P[(Promociones.xlsx<br/>Combos y Ofertas)]
-        Q[(Stock.xlsx<br/>Inventario por Unidades)]
-        R[(Historial_Compras.xlsx<br/>CRM Transaccional)]
-        S[(Interacciones_Chatbot.xlsx<br/>Logs de Mensajes)]
+    subgraph Capa_Datos [3. Capa de Datos Simulados / Persistencia]
+        H[(Productos.xlsx)]
+        I[(Promociones.xlsx)]
+        J[(Stock.xlsx)]
+        K[(Historial_Compras.xlsx)]
+        L[(Interacciones_Chatbot.xlsx)]
     end
 
-    %% ==========================================
-    %% FLUJOS DE COMUNICACIÓN Y DEPENDENCIAS
-    %% ==========================================
+    %% Conexiones
+    A <-->|Mensajes / Eventos JSON| D
 
-    %% Del Frontend a la API
-    A -->|1. Envía mensaje JSON| C
-    B -->|Solicita datos analíticos| C
+    E <--->|Consulta de productos| H
+    F <--->|Promociones vigentes| I
+    G <--->|Historial de compras| K
+    G <--->|Validación de stock| J
 
-    %% De la API a los Controladores
-    C --> D
-    C --> E
-    C --> F
+    D --->|Registro de interacciones| L
 
-    %% De los Controladores a los Servicios
-    D --> G
-    E --> J
-    F --> H
+    %% Estilos
+    style Capa_Presentacion fill:#ffffff,stroke:#25D366,stroke-width:2px
+    style Capa_Logica fill:#ffffff,stroke:#333333,stroke-width:1.5px
+    style Capa_Datos fill:#ffffff,stroke:#217346,stroke-width:2px
 
-    %% Relaciones internas entre Servicios
-    G --> H
-    G --> I
-
-    %% Servicios a Repositorios
-    H --> K
-    I --> K
-    I --> L
-    G --> L
-    G --> M
-    J --> L
-    J --> M
-    J --> N
-
-    %% Repositorios a Excel
-    K --> O
-    K --> P
-    K --> Q
-    L --> R
-    M --> S
-    N --> S
-
-    %% ==========================================
-    %% ESTILOS VISUALES
-    %% ==========================================
-    style Frontend fill:#ffffff,stroke:#25D366,stroke-width:2px
-    style Backend fill:#ffffff,stroke:#333333,stroke-width:2px
-    style Controladores fill:#fafafa,stroke:#666666,stroke-width:1px
-    style Servicios fill:#fafafa,stroke:#666666,stroke-width:1px
-    style Repositorios fill:#fafafa,stroke:#666666,stroke-width:1px
-    style Persistencia fill:#ffffff,stroke:#217346,stroke-width:2px
+    style M fill:#f5f5ff,stroke:#6C63FF,stroke-width:2px
+```
 ```
 # 3. Descripción de las Capas del Sistema
 
