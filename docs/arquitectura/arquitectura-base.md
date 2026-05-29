@@ -105,7 +105,7 @@ Archivos Excel (.xlsx)
 
 ## 2.1 Diagrama de Arquitectura
 
-``````mermaid
+```mermaid
 graph TD
     %% ==========================================
     %% CAPA DE PRESENTACIÓN
