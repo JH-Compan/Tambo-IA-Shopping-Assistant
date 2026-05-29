@@ -105,94 +105,210 @@ Archivos Excel (.xlsx)
 
 ## 2.1 Diagrama de Arquitectura
 
+## 7. Diagrama de Arquitectura Completo del Sistema
+
+El siguiente diagrama de bloques detalla la arquitectura monolítica modular por capas del proyecto. Muestra de forma explícita cómo interactúan las interfaces de usuario con los controladores de Flask, cómo se distribuye la lógica en servicios especializados, cómo interviene el motor LLM de inteligencia artificial y qué archivo Excel específico lee o escribe cada componente.
+
 ```mermaid
 graph TD
 
-    %% =========================
+    %% ==========================================
     %% CAPA DE PRESENTACIÓN
-    %% =========================
+    %% ==========================================
 
-    subgraph Capa_Presentacion [1. Capa de Frontend / Presentación]
+    subgraph Frontend [1. Capa de Presentación / Interfaces Web]
 
-        A[Interfaz Web Tipo Chat WhatsApp]
-            --> B[Simulación de Mensajes Interactivos]
+        A[Interfaz Web Cliente<br/>Chat simulado tipo WhatsApp]
 
-        B --> C[Captura de Inputs de Usuario]
-
-    end
-
-
-    %% =========================
-    %% CAPA DE LÓGICA
-    %% =========================
-
-    subgraph Capa_Logica [2. Capa de Lógica del Sistema / Backend]
-
-        D[Controlador de Flujo Conversacional .py]
-
-        D --> E[Motor de Búsqueda de Productos]
-
-        D --> F[Módulo de Consulta de Promociones]
-
-        D --> G[Algoritmo de Recomendaciones según Historial]
-
-        D --> M[Motor LLM / IA Conversacional]
-
-        %% Interacción del LLM
-        M --> E
-        M --> F
-        M --> G
+        B[Dashboard Administrativo<br/>Productos, conversaciones y métricas]
 
     end
 
 
-    %% =========================
-    %% CAPA DE DATOS
-    %% =========================
+    %% ==========================================
+    %% BACKEND MONOLÍTICO FLASK
+    %% ==========================================
 
-    subgraph Capa_Datos [3. Capa de Datos Simulados / Persistencia]
+    subgraph Backend [2. Aplicación Monolítica Flask]
 
-        H[(Productos.xlsx)]
+        C[API Flask<br/>Rutas HTTP / Endpoints JSON]
 
-        I[(Promociones.xlsx)]
 
-        J[(Stock.xlsx)]
+        %% ======================================
+        %% CONTROLADORES
+        %% ======================================
 
-        K[(Historial_Compras.xlsx)]
+        subgraph Controladores [Capa de Controladores / Enrutamiento]
 
-        L[(Interacciones_Chatbot.xlsx)]
+            D[ChatController<br/>/api/chat]
+
+            E[AdminController<br/>/api/metricas]
+
+            F[ProductoController<br/>/api/productos]
+
+        end
+
+
+        %% ======================================
+        %% SERVICIOS
+        %% ======================================
+
+        subgraph Servicios [Capa de Servicios / Lógica de Negocio]
+
+            G[ChatbotService<br/>Procesamiento conversacional e intenciones]
+
+            H[ProductoService<br/>Consulta y filtrado de catálogo]
+
+            I[RecomendacionService<br/>Reglas básicas y cruce de datos]
+
+            J[MetricaService<br/>Consultas frecuentes y estadísticas]
+
+            X[LLMService / IA Conversacional<br/>Procesamiento semántico y generación de respuestas]
+
+        end
+
+
+        %% ======================================
+        %% REPOSITORIOS
+        %% ======================================
+
+        subgraph Repositorios [Capa de Acceso a Datos / Repositorios]
+
+            K[ProductoRepository<br/>Lector de Catálogo y Stock]
+
+            L[ConversacionRepository<br/>Gestor de Historial CRM]
+
+            M[MensajeRepository<br/>Gestor de Logs del Chat]
+
+            N[MetricaRepository<br/>Acumulador de Estadísticas]
+
+        end
 
     end
 
 
-    %% =========================
-    %% CONEXIONES PRINCIPALES
-    %% =========================
+    %% ==========================================
+    %% CAPA DE PERSISTENCIA
+    %% ==========================================
 
-    A <-->|Mensajes de Texto / Eventos JSON| D
+    subgraph Persistencia [3. Capa de Datos / Persistencia Local Excel]
 
-    E <--->|Lectura de registros| H
+        O[(Productos.xlsx<br/>Catálogo Maestro)]
 
-    F <--->|Filtro de ofertas vigentes| I
+        P[(Promociones.xlsx<br/>Combos y Ofertas)]
 
-    G <--->|Cruce de DNI / Celular| K
+        Q[(Stock.xlsx<br/>Inventario por Unidades)]
 
-    G <--->|Validación de disponibilidad| J
+        R[(Historial_Compras.xlsx<br/>CRM Transaccional)]
 
-    D --->|Log de auditoría| L
+        S[(Interacciones_Chatbot.xlsx<br/>Logs de Mensajes)]
+
+    end
 
 
-    %% =========================
-    %% ESTILOS
-    %% =========================
+    %% ==========================================
+    %% FLUJOS DE COMUNICACIÓN
+    %% ==========================================
 
-    style Capa_Presentacion fill:#ffffff,stroke:#25D366,stroke-width:2px
+    %% Frontend → API
+    A -->|1. Envía mensaje JSON| C
 
-    style Capa_Logica fill:#ffffff,stroke:#333333,stroke-width:1.5px
+    B -->|Solicita datos analíticos| C
 
-    style Capa_Datos fill:#ffffff,stroke:#217346,stroke-width:2px
 
-    style M fill:#f5f5ff,stroke:#6C63FF,stroke-width:2px
+    %% API → Controladores
+    C --> D
+
+    C --> E
+
+    C --> F
+
+
+    %% Controladores → Servicios
+    D --> G
+
+    E --> J
+
+    F --> H
+
+
+    %% ==========================================
+    %% INTEGRACIÓN DEL LLM
+    %% ==========================================
+
+    G --> X
+
+    X --> G
+
+    X --> H
+
+    X --> I
+
+
+    %% ==========================================
+    %% RELACIONES ENTRE SERVICIOS
+    %% ==========================================
+
+    G --> H
+
+    G --> I
+
+
+    %% ==========================================
+    %% SERVICIOS → REPOSITORIOS
+    %% ==========================================
+
+    H --> K
+
+    I --> K
+
+    I --> L
+
+    G --> L
+
+    G --> M
+
+    J --> L
+
+    J --> M
+
+    J --> N
+
+
+    %% ==========================================
+    %% REPOSITORIOS → EXCEL
+    %% ==========================================
+
+    K --> O
+
+    K --> P
+
+    K --> Q
+
+    L --> R
+
+    M --> S
+
+    N --> S
+
+
+    %% ==========================================
+    %% ESTILOS VISUALES
+    %% ==========================================
+
+    style Frontend fill:#ffffff,stroke:#25D366,stroke-width:2px
+
+    style Backend fill:#ffffff,stroke:#333333,stroke-width:2px
+
+    style Controladores fill:#fafafa,stroke:#666666,stroke-width:1px
+
+    style Servicios fill:#fafafa,stroke:#666666,stroke-width:1px
+
+    style Repositorios fill:#fafafa,stroke:#666666,stroke-width:1px
+
+    style Persistencia fill:#ffffff,stroke:#217346,stroke-width:2px
+
+    style X fill:#f5f5ff,stroke:#6C63FF,stroke-width:2px
 ```
 
 </details>
