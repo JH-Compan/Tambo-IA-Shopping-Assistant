@@ -105,8 +105,6 @@ Archivos Excel (.xlsx)
 
 ## 2.1 Diagrama de Arquitectura
 
-
-```
 ```mermaid
 graph TD
     %% ==========================================
