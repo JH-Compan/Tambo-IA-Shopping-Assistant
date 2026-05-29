@@ -1,17 +1,11 @@
-"""
-AdminController
-Endpoint de métricas para el dashboard administrativo.
-
-GET /api/metricas → resumen de estadísticas del sistema
-"""
 from flask import Blueprint, jsonify
-from services import metrica_service
+from services.metrica_service import MetricaService
 
-admin_bp = Blueprint("admin", __name__)
+admin_bp = Blueprint("admin_bp", __name__)
+metrica_service = MetricaService()
 
 
-@admin_bp.route("/api/metricas", methods=["GET"])
-def metricas():
-    """Retorna las métricas generales del chatbot."""
-    datos = metrica_service.obtener_metricas()
-    return jsonify(datos), 200
+@admin_bp.route("/api/admin/resumen", methods=["GET"])
+def resumen_general():
+    resumen = metrica_service.obtener_resumen_general()
+    return jsonify(resumen), 200
