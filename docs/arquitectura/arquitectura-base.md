@@ -107,6 +107,103 @@ Archivos Excel (.xlsx)
 
 
 ```
+```mermaid
+graph TD
+    %% ==========================================
+    %% CAPA DE PRESENTACIÓN
+    %% ==========================================
+    subgraph Frontend [1. Capa de Presentación / Interfaces Web]
+        A[Interfaz Web Cliente<br/>Chat simulado tipo WhatsApp]
+        B[Dashboard Administrativo<br/>Productos, conversaciones y métricas]
+    end
+
+    %% ==========================================
+    %% BACKEND MONOLÍTICO FLASK
+    %% ==========================================
+    subgraph Backend [2. Aplicación Monolítica Flask]
+        C[API Flask<br/>Rutas HTTP / Endpoints JSON]
+
+        subgraph Controladores [Capa de Controladores / Enrutamiento]
+            D[ChatController<br/>/api/chat]
+            E[AdminController<br/>/api/metricas]
+            F[ProductoController<br/>/api/productos]
+        end
+
+        subgraph Servicios [Capa de Servicios / Lógica de Negocio]
+            G[ChatbotService<br/>Procesamiento conversacional e intenciones]
+            H[ProductoService<br/>Consulta y filtrado de catálogo]
+            I[RecomendacionService<br/>Reglas básicas y cruce de datos]
+            J[MetricaService<br/>Consultas frecuentes y estadísticas]
+        end
+
+        subgraph Repositorios [Capa de Acceso a Datos / Repositorios]
+            K[ProductoRepository<br/>Lector de Catálogo y Stock]
+            L[ConversacionRepository<br/>Gestor de Historial CRM]
+            M[MensajeRepository<br/>Gestor de Logs del Chat]
+            N[MetricaRepository<br/>Acumulador de Estadísticas]
+        end
+    end
+
+    %% ==========================================
+    %% CAPA DE PERSISTENCIA
+    %% ==========================================
+    subgraph Persistencia [3. Capa de Datos / Persistencia Local Excel]
+        O[(Productos.xlsx<br/>Catálogo Maestro)]
+        P[(Promociones.xlsx<br/>Combos y Ofertas)]
+        Q[(Stock.xlsx<br/>Inventario por Unidades)]
+        R[(Historial_Compras.xlsx<br/>CRM Transaccional)]
+        S[(Interacciones_Chatbot.xlsx<br/>Logs de Mensajes)]
+    end
+
+    %% ==========================================
+    %% FLUJOS DE COMUNICACIÓN Y DEPENDENCIAS
+    %% ==========================================
+    
+    %% Del Frontend a la API (Peticiones del Usuario y Admin)
+    A -->|1. Envía mensaje JSON| [span_11](start_span)C
+    B -->|Solicita datos analíticos| C[span_11](end_span)
+
+    %% De la API a los Controladores específicos
+    [span_12](start_span)C --> D[span_12](end_span)
+    [span_13](start_span)C --> E[span_13](end_span)
+    [span_14](start_span)C --> F[span_14](end_span)
+
+    %% De los Controladores a los Servicios de Negocio
+    [span_15](start_span)D --> G[span_15](end_span)
+    [span_16](start_span)E --> J[span_16](end_span)
+    [span_17](start_span)F --> H[span_17](end_span)
+
+    %% Relaciones internas entre Servicios
+    [span_18](start_span)G --> H[span_18](end_span)
+    [span_19](start_span)G --> I[span_19](end_span)
+
+    %% De los Servicios a la Capa de Repositorios (Acceso a Datos)
+    [span_20](start_span)H --> K[span_20](end_span)
+    I --> K
+    I --> L
+    [span_21](start_span)G --> L[span_21](end_span)
+    [span_22](start_span)G --> M[span_22](end_span)
+    [span_23](start_span)J --> L[span_23](end_span)
+    [span_24](start_span)J --> M[span_24](end_span)
+    [span_25](start_span)J --> N[span_25](end_span)
+
+    %% De los Repositorios a las Tablas Físicas de Excel
+    K --> O
+    K --> P
+    K --> Q
+    L --> R
+    M --> S
+    N --> S
+
+    %% ==========================================
+    %% ESTILOS VISUALES (BRUTALISMO / MINIMALISTA)
+    %% ==========================================
+    style Frontend fill:#ffffff,stroke:#25D366,stroke-width:2px
+    style Backend fill:#ffffff,stroke:#333333,stroke-width:2px
+    style Controladores fill:#fafafa,stroke:#666666,stroke-width:1px
+    style Servicios fill:#fafafa,stroke:#666666,stroke-width:1px
+    style Repositorios fill:#fafafa,stroke:#666666,stroke-width:1px
+    style Persistencia fill:#ffffff,stroke:#217346,stroke-width:2px
 
 ---
 
