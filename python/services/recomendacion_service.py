@@ -1,68 +1,97 @@
-"""
-RecomendacionService
-Genera recomendaciones personalizadas según historial o popularidad.
-"""
-from repositories import conversacion_repository, producto_repository
-from services import producto_service
+from repositories.producto_repository import ProductoRepository
+from repositories.recomendacion_repository import RecomendacionRepository
 
 
-def recomendar(telefono: str):
-    """
-    Punto de entrada principal.
-    - Si el cliente tiene historial → recomendaciones personalizadas.
-    - Si no tiene historial → productos populares (HU-03).
-    Retorna un dict con: tipo, mensaje y lista de productos recomendados.
-    """
-    historial = conversacion_repository.obtener_historial_cliente(telefono)
+class RecomendacionService:
 
-    if historial:
-        return _recomendar_por_historial(telefono)
-    else:
-        return _recomendar_populares()
+    def __init__(self):
+        self.producto_repository = ProductoRepository()
+        self.recomendacion_repository = RecomendacionRepository()
 
+    def recomendar_productos(self, mensaje, conversation_id=None):
+        texto = mensaje.lower()
 
-def _recomendar_por_historial(telefono: str):
-    """
-    HU-04: Recomienda productos relacionados a los más comprados por el cliente.
-    """
-    frecuentes = conversacion_repository.obtener_productos_frecuentes(telefono, top=3)
-    stock_todos = {s["id_producto"]: s["stock_disponible"]
-                   for s in producto_repository.obtener_stock_todos()}
+        if any(p in texto for p in ["promo", "promoción", "oferta", "descuento"]):
+            return {
+                "tipo": "promociones",
+                "items": self.producto_repository.listar_promociones_activas(limite=5),
+                "razon": "El usuario solicitó promociones u ofertas."
+            }
 
-    recomendaciones = []
-    for item in frecuentes:
-        id_prod = item["id_producto"]
-        stock_actual = stock_todos.get(id_prod, 0)
+        if any(p in texto for p in ["barato", "económico", "economico", "menor precio"]):
+            productos = self.producto_repository.listar_productos_ordenados_por_precio(limite=5)
+            return {
+                "tipo": "productos",
+                "items": productos,
+                "razon": "El usuario mostró interés por productos económicos."
+            }
 
-        if stock_actual > 0:
-            # El producto tiene stock, lo recomendamos directamente
-            todos = producto_repository.obtener_todos_los_productos()
-            producto = next((p for p in todos if p["id_producto"] == id_prod), None)
-            if producto:
-                producto["stock"] = stock_actual
-                producto["razon"] = "Lo compras frecuentemente"
-                recomendaciones.append(producto)
-        else:
-            # Producto agotado → sugerir alternativa (HU-05)
-            alternativa = producto_service.obtener_alternativa(id_prod)
-            if alternativa:
-                alternativa["razon"] = f"Alternativa a {item['nombre_producto']} (agotado)"
-                recomendaciones.append(alternativa)
+        categorias = self.producto_repository.listar_categorias()
 
-    return {
-        "tipo": "personalizada",
-        "mensaje": "Basado en tus compras anteriores, te recomendamos:",
-        "productos": recomendaciones
-    }
+        for categoria in categorias:
+            nombre_categoria = categoria["name"].lower()
 
+            if nombre_categoria in texto:
+                productos = self.producto_repository.buscar_productos_por_categoria_id(
+                    categoria["id"],
+                    limite=5
+                )
 
-def _recomendar_populares():
-    """
-    HU-03: Para clientes sin historial, recomienda los más populares.
-    """
-    populares = producto_service.obtener_productos_populares()
-    return {
-        "tipo": "popular",
-        "mensaje": "¡Hola! Como es tu primera vez, te mostramos los productos más populares:",
-        "productos": populares
-    }
+                return {
+                    "tipo": "productos",
+                    "items": productos,
+                    "razon": f"El usuario mencionó la categoría {categoria['name']}."
+                }
+
+        palabras_clave = {
+            "bebida": ["bebida", "tomar", "gaseosa", "agua", "jugo"],
+            "dulce": ["dulce", "chocolate", "galleta", "gomita", "caramelo"],
+            "snack": ["snack", "papas", "piqueo", "salado"],
+            "limpieza": ["limpieza", "jabón", "detergente", "papel"]
+        }
+
+        for _, palabras in palabras_clave.items():
+            if any(palabra in texto for palabra in palabras):
+                for palabra in palabras:
+                    productos = self.producto_repository.buscar_productos_por_nombre(palabra, limite=5)
+                    if productos:
+                        return {
+                            "tipo": "productos",
+                            "items": productos,
+                            "razon": f"El usuario mencionó una necesidad relacionada con {palabra}."
+                        }
+
+        productos = self.producto_repository.listar_productos(limite=5)
+
+        return {
+            "tipo": "productos",
+            "items": productos,
+            "razon": "No se detectó una categoría específica; se muestran productos generales."
+        }
+
+    def guardar_recomendaciones_generadas(self, conversation_id, productos, razon):
+        recomendaciones_guardadas = []
+
+        for index, producto in enumerate(productos[:5]):
+            score = round(0.95 - (index * 0.08), 2)
+
+            recomendacion = self.recomendacion_repository.guardar_recomendacion_producto(
+                conversation_id=conversation_id,
+                product_id=producto["id"],
+                score=score,
+                reason=razon
+            )
+
+            recomendaciones_guardadas.append(recomendacion)
+
+        return recomendaciones_guardadas
+
+    def registrar_interacciones_recomendadas(self, user_id, conversation_id, productos):
+        for producto in productos[:5]:
+            self.recomendacion_repository.guardar_interaccion_producto(
+                user_id=user_id,
+                conversation_id=conversation_id,
+                interaction_type="recommended",
+                product_id=producto["id"],
+                weight=0.5
+            )
