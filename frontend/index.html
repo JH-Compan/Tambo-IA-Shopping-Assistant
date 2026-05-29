@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -68,7 +67,7 @@ body{
             <div>
                 <h2 class="font-bold">Tambo+</h2>
                 <p id="bot-status" class="text-xs text-green-100">
-                    en línea
+                    conectando backend...
                 </p>
             </div>
 
@@ -84,7 +83,6 @@ body{
             <i class="fa-solid fa-ellipsis-vertical"></i>
 
         </div>
-
     </header>
 
     <!-- CHAT -->
@@ -92,7 +90,7 @@ body{
     class="flex-1 overflow-y-auto p-4 wa-bg bg-wa-bg flex flex-col gap-3 no-scrollbar">
 
         <div class="self-center bg-[#fff3c4] text-[#6b5b22] text-[11px] px-3 py-2 rounded-lg text-center shadow">
-            Simulación IA Tambo+ Producción — recomendaciones inteligentes y carrito dinámico.
+            Tambo+ conectado al backend Flask y Supabase — recomendaciones inteligentes y carrito dinámico.
         </div>
 
     </main>
@@ -120,230 +118,145 @@ body{
 <script>
 
 /* =========================================================
-   BASE DE DATOS COMPLETA
+   CONFIGURACIÓN BACKEND
 ========================================================= */
 
-const PRODUCTS = [
+const API_BASE = window.location.protocol === "file:"
+    ? "http://localhost:5000"
+    : window.location.origin;
 
-/* BEBIDAS */
-
-{
-    id:"B1",
-    nombre:"Inca Kola 500ml",
-    precio:3.50,
-    categoria:"bebidas",
-    keywords:["inca","gaseosa","cola"],
-    stock:25
-},
-{
-    id:"B2",
-    nombre:"Coca Cola 500ml",
-    precio:3.50,
-    categoria:"bebidas",
-    keywords:["coca","cola"],
-    stock:20
-},
-{
-    id:"B3",
-    nombre:"Sprite 500ml",
-    precio:3.50,
-    categoria:"bebidas",
-    keywords:["sprite"],
-    stock:15
-},
-{
-    id:"B4",
-    nombre:"Agua San Luis",
-    precio:2.00,
-    categoria:"bebidas",
-    keywords:["agua"],
-    stock:40
-},
-{
-    id:"B5",
-    nombre:"Red Bull",
-    precio:8.50,
-    categoria:"bebidas",
-    keywords:["energizante","redbull"],
-    stock:10
-},
-{
-    id:"B6",
-    nombre:"Pilsen Lata",
-    precio:5.00,
-    categoria:"bebidas",
-    keywords:["cerveza","pilsen"],
-    stock:18
-},
-
-/* SNACKS */
-
-{
-    id:"S1",
-    nombre:"Papas Lays",
-    precio:2.80,
-    categoria:"snacks",
-    keywords:["lays","papas"],
-    stock:30
-},
-{
-    id:"S2",
-    nombre:"Doritos",
-    precio:3.50,
-    categoria:"snacks",
-    keywords:["doritos"],
-    stock:22
-},
-{
-    id:"S3",
-    nombre:"Oreo Familiar",
-    precio:3.20,
-    categoria:"snacks",
-    keywords:["oreo","galleta"],
-    stock:14
-},
-{
-    id:"S4",
-    nombre:"Chocolate Sublime",
-    precio:2.50,
-    categoria:"snacks",
-    keywords:["sublime","chocolate"],
-    stock:35
-},
-{
-    id:"S5",
-    nombre:"Pícaras",
-    precio:1.80,
-    categoria:"snacks",
-    keywords:["picaras"],
-    stock:20
-},
-
-/* COMIDA */
-
-{
-    id:"C1",
-    nombre:"Empanada de Carne",
-    precio:4.90,
-    categoria:"comida",
-    keywords:["empanada"],
-    stock:15
-},
-{
-    id:"C2",
-    nombre:"Pizza Pepperoni",
-    precio:16.90,
-    categoria:"comida",
-    keywords:["pizza"],
-    stock:9
-},
-{
-    id:"C3",
-    nombre:"Hot Dog",
-    precio:5.50,
-    categoria:"comida",
-    keywords:["hotdog","salchicha"],
-    stock:13
-},
-{
-    id:"C4",
-    nombre:"Hamburguesa Clásica",
-    precio:12.90,
-    categoria:"comida",
-    keywords:["hamburguesa"],
-    stock:8
-},
-{
-    id:"C5",
-    nombre:"Combo Broaster",
-    precio:18.90,
-    categoria:"comida",
-    keywords:["pollo","broaster"],
-    stock:7
-}
-
-];
-
-/* =========================================================
-   VARIABLES
-========================================================= */
-
+let products = [];
+let categories = [];
+let promotions = [];
 let cart = [];
-let purchaseHistory = [];
-
-/* =========================================================
-   PROMOCIONES
-========================================================= */
-
-const PROMOS = [
-
-{
-    id:"P1",
-    nombre:"Combo Pizza + Coca Cola",
-    productos:[
-        "Pizza Pepperoni",
-        "Coca Cola 500ml"
-    ],
-    precio:19.90
-},
-
-{
-    id:"P2",
-    nombre:"Combo Dulcero",
-    productos:[
-        "Chocolate Sublime",
-        "Chocolate Sublime",
-        "Chocolate Sublime",
-        "Pícaras",
-        "Pícaras"
-    ],
-    precio:8.00
-},
-
-{
-    id:"P3",
-    nombre:"Combo Previa",
-    productos:[
-        "Pilsen Lata",
-        "Pilsen Lata",
-        "Pilsen Lata",
-        "Pilsen Lata",
-        "Pilsen Lata",
-        "Pilsen Lata"
-    ],
-    precio:24.90
-}
-
-];
+let conversationId = localStorage.getItem("tambo_conversation_id") || null;
+let catalogLoaded = false;
 
 /* =========================================================
    INIT
 ========================================================= */
 
-window.onload = () => {
+window.onload = async () => {
+    await initializeApp();
+};
 
-    botMessage(`
-        ¡Hola! Bienvenido a <strong>Tambo+</strong><br><br>
+async function initializeApp(){
+    setStatus("conectando backend...");
 
-        Soy <strong>TamboBot IA</strong>, tu asistente inteligente.<br><br>
+    try{
+        await checkBackend();
+        await loadCatalog();
 
-        Puedo:
-        <br>• Mostrar productos
-        <br>• Crear combos
-        <br>• Recomendar según tus gustos
-        <br>• Gestionar carrito
-        <br>• Generar ticket automático
-        <br><br>
+        setStatus("en línea");
 
-        ¿Qué deseas hoy?
-    `,[
-        "Ver bebidas",
-        "Ver snacks",
-        "Ver comida",
-        "Ver promociones",
-        "Mi recomendación IA"
+        botMessage(`
+            ¡Hola! Bienvenido a <strong>Tambo+</strong><br><br>
+            Soy <strong>TamboBot IA</strong>, tu asistente inteligente conectado al backend.<br><br>
+            Ahora los productos y promociones se consultan desde <strong>Supabase</strong> mediante Flask.<br><br>
+            Puedo:
+            <br>• Mostrar productos reales del backend
+            <br>• Buscar productos
+            <br>• Mostrar promociones
+            <br>• Recomendar según tu mensaje
+            <br>• Gestionar carrito local
+            <br><br>
+            ¿Qué deseas hoy?
+        `,[
+            "Ver productos",
+            "Ver bebidas",
+            "Ver snacks",
+            "Ver comida",
+            "Ver promociones",
+            "Mi recomendación IA"
+        ]);
+    }
+    catch(error){
+        console.error(error);
+        setStatus("backend no disponible");
+        botMessage(`
+            No pude conectarme al backend.<br><br>
+            Verifica que Flask esté corriendo con:<br>
+            <code>cd python</code><br>
+            <code>python app.py</code><br><br>
+            Luego vuelve a abrir esta página.
+        `,["Reintentar conexión"]);
+    }
+}
+
+/* =========================================================
+   API
+========================================================= */
+
+async function apiGet(path){
+    const response = await fetch(`${API_BASE}${path}`);
+
+    if(!response.ok){
+        throw new Error(`Error GET ${path}: ${response.status}`);
+    }
+
+    return await response.json();
+}
+
+async function apiPost(path, payload){
+    const response = await fetch(`${API_BASE}${path}`,{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify(payload)
+    });
+
+    if(!response.ok){
+        const errorText = await response.text();
+        throw new Error(`Error POST ${path}: ${response.status} ${errorText}`);
+    }
+
+    return await response.json();
+}
+
+async function checkBackend(){
+    await apiGet("/api/health");
+}
+
+async function loadCatalog(){
+    const [productosData, categoriasData, promocionesData] = await Promise.all([
+        apiGet("/api/productos"),
+        apiGet("/api/categorias"),
+        apiGet("/api/promociones")
     ]);
 
+    products = normalizeArray(productosData);
+    categories = normalizeArray(categoriasData);
+    promotions = normalizeArray(promocionesData);
+    catalogLoaded = true;
+}
+
+async function searchProducts(text){
+    const query = encodeURIComponent(text || "");
+    const data = await apiGet(`/api/productos/buscar?q=${query}`);
+    return normalizeArray(data);
+}
+
+async function askBackend(message){
+    const data = await apiPost("/api/chat",{
+        user_id:"USR001",
+        mensaje:message,
+        conversation_id:conversationId
+    });
+
+    if(data.conversation_id){
+        conversationId = data.conversation_id;
+        localStorage.setItem("tambo_conversation_id", conversationId);
+    }
+
+    return data;
+}
+
+function normalizeArray(data){
+    if(Array.isArray(data)) return data;
+    if(data && Array.isArray(data.data)) return data.data;
+    if(data && Array.isArray(data.items)) return data.items;
+    return [];
 }
 
 /* =========================================================
@@ -351,35 +264,31 @@ window.onload = () => {
 ========================================================= */
 
 function handleKey(e){
-
     if(e.key === "Enter"){
         processMessage();
     }
-
 }
 
-function processMessage(){
-
+async function processMessage(){
     const input = document.getElementById("chat-input");
-
     const text = input.value.trim();
 
     if(!text) return;
 
     userMessage(text);
-
     input.value = "";
 
     setStatus("procesando IA...");
 
-    setTimeout(()=>{
-
-        chatbot(text);
-
+    try{
+        await chatbot(text);
         setStatus("en línea");
-
-    },700);
-
+    }
+    catch(error){
+        console.error(error);
+        setStatus("error backend");
+        botMessage(`Ocurrió un error consultando el backend.<br><br>${escapeHtml(error.message)}`,["Reintentar conexión"]);
+    }
 }
 
 /* =========================================================
@@ -387,783 +296,449 @@ function processMessage(){
 ========================================================= */
 
 function setStatus(text){
-
     document.getElementById("bot-status").innerText = text;
-
 }
 
 /* =========================================================
    CHATBOT ENGINE
 ========================================================= */
 
-function chatbot(message){
-
+async function chatbot(message){
     const q = normalize(message);
 
-    /* ======================================
-       CARRITO
-    ====================================== */
+    if(q.includes("reintentar")){
+        await initializeApp();
+        return;
+    }
 
-    if(
-        q.includes("carrito") ||
-        q.includes("ver compra")
-    ){
+    if(!catalogLoaded){
+        await loadCatalog();
+    }
 
+    if(q.includes("carrito") || q.includes("ver compra")){
         showCart();
         return;
-
     }
 
-    /* ======================================
-       FINALIZAR
-    ====================================== */
-
-    if(
-        q.includes("finalizar") ||
-        q.includes("cerrar compra") ||
-        q.includes("pagar")
-    ){
-
+    if(q.includes("finalizar") || q.includes("cerrar compra") || q.includes("pagar")){
         finishPurchase();
         return;
-
     }
 
-    /* ======================================
-       BEBIDAS
-    ====================================== */
+    if(q.includes("producto") || q.includes("catalogo") || q.includes("catálogo")){
+        showProducts(products,"Productos disponibles");
+        return;
+    }
 
     if(q.includes("bebida")){
-
-        showCategory("bebidas","🥤 Bebidas Disponibles");
+        await showCategoryOrSearch("bebida","Bebidas disponibles");
         return;
-
     }
 
-    /* ======================================
-       SNACKS
-    ====================================== */
-
-    if(
-        q.includes("snack") ||
-        q.includes("dulce")
-    ){
-
-        showCategory("snacks","Snacks y Dulces");
+    if(q.includes("snack") || q.includes("dulce")){
+        await showCategoryOrSearch(q.includes("dulce") ? "dulce" : "snack","Snacks y dulces");
         return;
-
     }
-
-    /* ======================================
-       COMIDA
-    ====================================== */
 
     if(q.includes("comida")){
-
-        showCategory("comida","Comida Lista");
+        await showCategoryOrSearch("comida","Comida lista");
         return;
-
     }
 
-    /* ======================================
-       PROMOS
-    ====================================== */
-
-    if(q.includes("promo")){
-
-        showPromos();
+    if(q.includes("promo") || q.includes("oferta") || q.includes("descuento")){
+        showPromotions(promotions);
         return;
-
     }
 
-    /* ======================================
-       RECOMENDACION IA
-    ====================================== */
-
-    if(
-    q.includes("recomendacion") ||
-    q.includes("recomiendame") ||
-    q === "ia"
-){
-
-        generateRecommendation();
+    if(q.includes("recomendacion") || q.includes("recomendación") || q.includes("recomiendame") || q.includes("recomiéndame") || q === "ia"){
+        await showBackendRecommendation(message);
         return;
-
     }
 
-    /* ======================================
-       COMPRAR COMBOS
-    ====================================== */
+    const localMatches = findLocalProducts(q);
 
-    if(
-        q.includes("combo pizza")
-    ){
-
-        addPromoToCart("P1");
+    if(localMatches.length){
+        showProducts(localMatches,`Resultados para "${escapeHtml(message)}"`);
         return;
-
     }
 
-    if(
-        q.includes("combo dulcero")
-    ){
-
-        addPromoToCart("P2");
-        return;
-
-    }
-
-    if(
-        q.includes("combo previa")
-    ){
-
-        addPromoToCart("P3");
-        return;
-
-    }
-
-    /* ======================================
-       AGREGAR PRODUCTOS
-    ====================================== */
-
-    if(
-        q.includes("comprar") ||
-        q.includes("agregar")
-    ){
-
-        addToCart(q);
-        return;
-
-    }
-
-    /* ======================================
-       SALUDO
-    ====================================== */
-
-    if(
-        q.includes("hola") ||
-        q.includes("buenas")
-    ){
-
-        botMessage(`
-            ¡Hola nuevamente!<br><br>
-
-            Puedes explorar:
-        `,[
-            "Ver bebidas",
-            "Ver snacks",
-            "Ver comida",
-            "Ver promociones",
-            "Mi recomendación IA"
-        ]);
-
-        return;
-
-    }
-
-    /* ======================================
-       DEFAULT
-    ====================================== */
-
-    botMessage(`
-        No entendí exactamente tu solicitud<br><br>
-
-        Puedes probar:
-        <br>• bebidas
-        <br>• snacks
-        <br>• comida
-        <br>• promociones
-        <br>• recomendación
-        <br>• carrito
-    `);
-
+    await showBackendRecommendation(message);
 }
 
 /* =========================================================
-   MOSTRAR CATEGORIAS
+   PRODUCTOS DESDE BACKEND
 ========================================================= */
 
-function showCategory(category,title){
+function showProducts(items,title="Productos"){
+    if(!items || !items.length){
+        botMessage("No encontré productos disponibles en el backend.",["Ver productos","Ver promociones"]);
+        return;
+    }
 
-    const products = PRODUCTS.filter(
-        p=>p.categoria===category
-    );
+    let html = `<strong>${escapeHtml(title)}</strong><br><br>`;
 
-    let html = `<strong>${title}</strong><br><br>`;
-
-    products.forEach(p=>{
-
-        html += `
-            • <strong>${p.nombre}</strong><br>
-            Precio: S/ ${p.precio.toFixed(2)}<br>
-            Stock: ${p.stock}<br><br>
-        `;
-
+    items.slice(0,10).forEach(product => {
+        html += productCard(product);
     });
 
-    botMessage(
-        html,
-        products.map(p=>"Comprar "+p.nombre)
-    );
+    botMessage(html,["Ver promociones","Mi carrito","Mi recomendación IA"]);
+}
 
+async function showCategoryOrSearch(term,title){
+    const local = findProductsByCategoryOrText(term);
+
+    if(local.length){
+        showProducts(local,title);
+        return;
+    }
+
+    const remote = await searchProducts(term);
+    showProducts(remote,title);
+}
+
+function findLocalProducts(text){
+    const query = normalize(text);
+
+    return products.filter(product => {
+        const name = normalize(productName(product));
+        const category = normalize(productCategoryName(product));
+        const description = normalize(productDescription(product));
+
+        return name.includes(query) ||
+            category.includes(query) ||
+            description.includes(query) ||
+            query.includes(name);
+    });
+}
+
+function findProductsByCategoryOrText(text){
+    const query = normalize(text);
+
+    return products.filter(product => {
+        const name = normalize(productName(product));
+        const category = normalize(productCategoryName(product));
+        const description = normalize(productDescription(product));
+
+        return category.includes(query) ||
+            name.includes(query) ||
+            description.includes(query);
+    });
+}
+
+function productCard(product){
+    const id = productId(product);
+    const name = productName(product);
+    const price = productPrice(product);
+    const category = productCategoryName(product);
+    const stock = productStock(product);
+    const description = productDescription(product);
+
+    return `
+        <div class="bg-white border rounded-xl p-3 mb-2 shadow-sm">
+            <div class="font-bold text-tambo-purple">${escapeHtml(name)}</div>
+            <div class="text-xs text-gray-500">${escapeHtml(category || "Producto")}</div>
+            ${description ? `<div class="text-xs text-gray-600 mt-1">${escapeHtml(description)}</div>` : ""}
+            <div class="flex justify-between items-center mt-2">
+                <span class="font-bold text-green-700">S/ ${formatMoney(price)}</span>
+                <span class="text-xs text-gray-500">Stock: ${escapeHtml(String(stock))}</span>
+            </div>
+            <button onclick="addProductToCartById('${escapeJs(id)}')"
+            class="mt-2 bg-wa-teal text-white text-xs px-3 py-1 rounded-full hover:scale-105 transition">
+                Agregar al carrito
+            </button>
+        </div>
+    `;
 }
 
 /* =========================================================
-   AGREGAR PRODUCTOS
+   PROMOCIONES DESDE BACKEND
 ========================================================= */
 
-function addToCart(query){
+function showPromotions(items){
+    if(!items || !items.length){
+        botMessage("No encontré promociones activas en el backend.",["Ver productos","Mi recomendación IA"]);
+        return;
+    }
 
-    let found = null;
+    let html = "<strong>Promociones activas</strong><br><br>";
 
-    PRODUCTS.forEach(p=>{
+    items.slice(0,10).forEach(promo => {
+        html += promotionCard(promo);
+    });
 
-        p.keywords.forEach(k=>{
+    botMessage(html,["Ver productos","Mi carrito","Mi recomendación IA"]);
+}
 
-            if(query.includes(k)){
-                found = p;
-            }
+function promotionCard(promo){
+    const id = productId(promo);
+    const name = promo.name || promo.nombre || promo.title || promo.titulo || `Promoción ${id}`;
+    const price = promo.price || promo.precio || promo.discount_price || promo.final_price || 0;
+    const description = promo.description || promo.descripcion || promo.detail || promo.detalle || "Promoción activa";
 
+    return `
+        <div class="bg-[#fff8d6] border border-yellow-300 rounded-xl p-3 mb-2 shadow-sm">
+            <div class="font-bold text-tambo-purple">${escapeHtml(name)}</div>
+            <div class="text-xs text-gray-600 mt-1">${escapeHtml(description)}</div>
+            <div class="flex justify-between items-center mt-2">
+                <span class="font-bold text-green-700">S/ ${formatMoney(price)}</span>
+                <span class="text-xs text-yellow-700">Activa</span>
+            </div>
+            <button onclick="addPromotionToCartById('${escapeJs(id)}')"
+            class="mt-2 bg-tambo-purple text-white text-xs px-3 py-1 rounded-full hover:scale-105 transition">
+                Agregar promoción
+            </button>
+        </div>
+    `;
+}
+
+/* =========================================================
+   RECOMENDACIÓN BACKEND
+========================================================= */
+
+async function showBackendRecommendation(message){
+    const data = await askBackend(message);
+    const respuesta = data.respuesta || "El backend respondió correctamente.";
+    const items = normalizeArray(data.items);
+    const tipo = data.tipo || "texto";
+
+    let html = `<strong>TamboBot IA</strong><br>${escapeHtml(respuesta)}<br><br>`;
+
+    if(items.length){
+        items.slice(0,5).forEach(item => {
+            html += tipo === "promociones" ? promotionCard(item) : productCard(item);
         });
-
-        if(
-            query.includes(normalize(p.nombre))
-        ){
-            found = p;
-        }
-
-    });
-
-    if(!found){
-
-        botMessage(`
-            No encontré ese producto.
-        `);
-
-        return;
-
     }
 
-    if(found.stock <= 0){
-
-        botMessage(`
-            ${found.nombre} no tiene stock.
-        `);
-
-        return;
-
-    }
-
-    found.stock--;
-
-    cart.push({
-        ...found,
-        isPromo:false
-    });
-
-    purchaseHistory.push(found);
-
-    const total = calculateTotal();
-
-    botMessage(`
-        <strong>${found.nombre}</strong> agregado al carrito.<br><br>
-
-        Productos actuales: ${cart.length}<br>
-        Total parcial: S/ ${total.toFixed(2)}
-    `,[
-        "Ver carrito",
-        "Finalizar compra",
-        "Mi recomendación IA",
-        "Ver promociones"
-    ]);
-
-}
-
-/* =========================================================
-   AGREGAR PROMOS
-========================================================= */
-
-function addPromoToCart(promoId){
-
-    const promo = PROMOS.find(
-        p=>p.id===promoId
-    );
-
-    if(!promo){
-
-        botMessage(`
-            Promoción no encontrada.
-        `);
-
-        return;
-
-    }
-
-    let productosHTML = "";
-
-    promo.productos.forEach(nombre=>{
-
-        const product = PRODUCTS.find(
-            p=>p.nombre===nombre
-        );
-
-        if(product){
-
-            cart.push({
-                ...product,
-                isPromo:true,
-                promoName:promo.nombre,
-                promoPrice:promo.precio
-            });
-
-            productosHTML += `
-                • ${product.nombre}<br>
-            `;
-
-        }
-
-    });
-
-    const total = calculateTotal();
-
-    botMessage(`
-        <strong>${promo.nombre}</strong> agregado al carrito.<br><br>
-
-        <strong>Incluye:</strong><br>
-        ${productosHTML}<br>
-
-        Precio promocional:
-        <strong>S/ ${promo.precio.toFixed(2)}</strong><br><br>
-
-        Total actual:
-        <strong>S/ ${total.toFixed(2)}</strong>
-    `,[
-        "Ver carrito",
-        "Finalizar compra",
-        "Mi recomendación IA"
-    ]);
-
+    botMessage(html,["Ver productos","Ver promociones","Mi carrito"]);
 }
 
 /* =========================================================
    CARRITO
 ========================================================= */
 
-function showCart(){
+function addProductToCartById(id){
+    const product = products.find(item => String(productId(item)) === String(id));
 
-    if(cart.length===0){
-
-        botMessage(`
-            Tu carrito está vacío.
-        `);
-
+    if(!product){
+        botMessage("No pude encontrar ese producto en el catálogo cargado.",["Ver productos"]);
         return;
-
     }
 
-    let html = `
-        <strong>🛒 Tu carrito actual</strong><br><br>
-    `;
-
-    cart.forEach((p,i)=>{
-
-        html += `
-            ${i+1}. ${p.nombre}
-        `;
-
-        if(p.isPromo){
-
-            html += `
-                <br>
-                <span style="color:#7c3aed;font-weight:bold;">
-                    ${p.promoName}
-                </span>
-            `;
-
-        }
-
-        html += `
-            <br>
-        `;
-
-        if(p.isPromo){
-
-            html += `
-                Precio incluido en promoción
-            `;
-
-        }else{
-
-            html += `
-                S/ ${p.precio.toFixed(2)}
-            `;
-
-        }
-
-        html += `<br><br>`;
-
+    addItemToCart({
+        id:productId(product),
+        name:productName(product),
+        price:Number(productPrice(product)) || 0,
+        type:"producto"
     });
-
-    html += `
-        <strong>Total:</strong>
-        S/ ${calculateTotal().toFixed(2)}
-    `;
-
-    botMessage(html,[
-        "Finalizar compra",
-        "Ver promociones",
-        "Mi recomendación IA"
-    ]);
-
 }
 
-/* =========================================================
-   TOTAL REAL
-========================================================= */
+function addPromotionToCartById(id){
+    const promo = promotions.find(item => String(productId(item)) === String(id));
 
-function calculateTotal(){
+    if(!promo){
+        botMessage("No pude encontrar esa promoción en el catálogo cargado.",["Ver promociones"]);
+        return;
+    }
+
+    addItemToCart({
+        id:productId(promo),
+        name:promo.name || promo.nombre || promo.title || `Promoción ${productId(promo)}`,
+        price:Number(promo.price || promo.precio || promo.discount_price || promo.final_price || 0),
+        type:"promoción"
+    });
+}
+
+function addItemToCart(item){
+    const existing = cart.find(cartItem => cartItem.id === item.id && cartItem.type === item.type);
+
+    if(existing){
+        existing.qty += 1;
+    }
+    else{
+        cart.push({
+            ...item,
+            qty:1
+        });
+    }
+
+    botMessage(`Agregué <strong>${escapeHtml(item.name)}</strong> al carrito.`,["Ver carrito","Finalizar compra","Ver productos"]);
+}
+
+function showCart(){
+    if(!cart.length){
+        botMessage("Tu carrito está vacío.",["Ver productos","Ver promociones"]);
+        return;
+    }
 
     let total = 0;
+    let html = "<strong>Tu carrito</strong><br><br>";
 
-    const promosAdded = [];
-
-    cart.forEach(item=>{
-
-        if(item.isPromo){
-
-            if(
-                !promosAdded.includes(item.promoName)
-            ){
-
-                total += item.promoPrice;
-
-                promosAdded.push(item.promoName);
-
-            }
-
-        }else{
-
-            total += item.precio;
-
-        }
-
-    });
-
-    return total;
-
-}
-
-/* =========================================================
-   RECOMENDACIONES IA
-========================================================= */
-
-function generateRecommendation(){
-
-    if(cart.length===0){
-
-        botMessage(`
-            Aún no compras nada.<br><br>
-
-            Te recomendamos:
-            <br>• Empanada + Inca Kola
-            <br>• Pizza + Coca Cola
-            <br>• Oreo + Red Bull
-        `,[
-            "Comprar Combo Pizza",
-            "Comprar Inca Kola",
-            "Comprar Oreo Familiar"
-        ]);
-
-        return;
-
-    }
-
-    const last = cart[cart.length-1];
-
-    /* BEBIDAS */
-
-    if(last.categoria==="bebidas"){
-
-        botMessage(`
-            Detectamos interés en bebidas.<br><br>
-
-            Recomendación IA:
-            <br><br>
-
-            Coca Cola
-            <br>
-            Oreo Familiar
-            <br><br>
-
-            Perfecto para acompañar tu bebida
-        `,[
-            "Comprar Coca Cola",
-            "Comprar Oreo Familiar"
-        ]);
-
-        return;
-
-    }
-
-    /* SNACKS */
-
-    if(last.categoria==="snacks"){
-
-        botMessage(`
-            Vemos que te gustan los snacks<br><br>
-
-            También podrían gustarte:
-            <br><br>
-
-            Chocolate Sublime
-            <br>
-            Red Bull
-        `,[
-            "Comprar Chocolate Sublime",
-            "Comprar Red Bull"
-        ]);
-
-        return;
-
-    }
-
-    /* COMIDA */
-
-    if(last.categoria==="comida"){
-
-        botMessage(`
-            Recomendación para acompañar tu comida:<br><br>
-
-            Inca Kola helada
-            <br>
-            Papas Lays
-        `,[
-            "Comprar Inca Kola",
-            "Comprar Papas Lays"
-        ]);
-
-        return;
-
-    }
-
-}
-
-/* =========================================================
-   PROMOCIONES
-========================================================= */
-
-function showPromos(){
-
-    let html = `
-        <strong>Promociones del Día</strong><br><br>
-    `;
-
-    PROMOS.forEach(promo=>{
+    cart.forEach(item => {
+        const subtotal = item.price * item.qty;
+        total += subtotal;
 
         html += `
-            • <strong>${promo.nombre}</strong><br>
-            Incluye:<br>
-            ${promo.productos.join(", ")}<br>
-            <strong>S/ ${promo.precio.toFixed(2)}</strong><br><br>
+            <div class="bg-white border rounded-xl p-3 mb-2">
+                <div class="font-bold">${escapeHtml(item.name)}</div>
+                <div class="text-xs text-gray-500">${escapeHtml(item.type)} x ${item.qty}</div>
+                <div class="font-bold text-green-700">S/ ${formatMoney(subtotal)}</div>
+            </div>
         `;
-
     });
 
-    botMessage(html,[
-        "Comprar Combo Pizza",
-        "Comprar Combo Dulcero",
-        "Comprar Combo Previa"
-    ]);
+    html += `<br><strong>Total: S/ ${formatMoney(total)}</strong>`;
 
+    botMessage(html,["Finalizar compra","Ver productos","Ver promociones"]);
 }
 
-/* =========================================================
-   FINALIZAR
-========================================================= */
-
 function finishPurchase(){
-
-    if(cart.length===0){
-
-        botMessage(`
-            No tienes productos en el carrito.
-        `);
-
+    if(!cart.length){
+        botMessage("No tienes productos en el carrito.",["Ver productos","Ver promociones"]);
         return;
-
     }
 
-    let ticket = `
-        <strong>TICKET DIGITAL TAMBO+</strong><br><br>
-    `;
-
-    cart.forEach((p,i)=>{
-
-        ticket += `
-            ${i+1}. ${p.nombre}
-        `;
-
-        if(p.isPromo){
-
-            ticket += `
-                <br>
-                <span style="color:#7c3aed;">
-                    ${p.promoName}
-                </span>
-            `;
-
-        }
-
-        ticket += `<br><br>`;
-
-    });
-
-    const code = "TB-"+Math.floor(Math.random()*90000);
-
-    ticket += `
-        --------------------------------<br>
-
-        <strong>Total:</strong>
-        S/ ${calculateTotal().toFixed(2)}<br><br>
-
-        Código de recojo:<br>
-        <strong>${code}</strong><br><br>
-
-        Gracias por comprar en Tambo+
-    `;
-
-    botMessage(ticket,[
-        "Ver bebidas",
-        "Ver snacks",
-        "Ver promociones"
-    ]);
+    const total = cart.reduce((sum,item)=> sum + item.price * item.qty,0);
+    const ticket = `T-${Date.now()}`;
 
     cart = [];
 
+    botMessage(`
+        <strong>Compra finalizada</strong><br><br>
+        Ticket: <strong>${ticket}</strong><br>
+        Total pagado: <strong>S/ ${formatMoney(total)}</strong><br><br>
+        Gracias por comprar en Tambo+.
+    `,["Ver productos","Ver promociones","Nueva recomendación IA"]);
+}
+
+function resetAll(){
+    cart = [];
+    conversationId = null;
+    localStorage.removeItem("tambo_conversation_id");
+    document.getElementById("chat-box").innerHTML = `
+        <div class="self-center bg-[#fff3c4] text-[#6b5b22] text-[11px] px-3 py-2 rounded-lg text-center shadow">
+            Tambo+ conectado al backend Flask y Supabase — recomendaciones inteligentes y carrito dinámico.
+        </div>
+    `;
+    initializeApp();
 }
 
 /* =========================================================
-   UI MENSAJES
+   UI
 ========================================================= */
 
 function userMessage(text){
+    const box = document.getElementById("chat-box");
 
-    appendBubble(text,true);
-
-}
-
-function botMessage(text,buttons=[]){
-
-    appendBubble(text,false,buttons);
-
-}
-
-function appendBubble(text,isUser,buttons=[]){
-
-    const chat = document.getElementById("chat-box");
-
-    const div = document.createElement("div");
-
-    div.className = `
-        max-w-[85%]
-        p-3
-        rounded-xl
-        shadow
-        text-sm
-        ${isUser
-            ? 'self-end bg-wa-out rounded-br-none'
-            : 'self-start bg-wa-in rounded-bl-none'}
-    `;
-
-    let html = `
-        <div class="leading-relaxed text-gray-800">
-            ${text}
+    box.innerHTML += `
+        <div class="self-end bg-wa-out px-4 py-2 rounded-xl rounded-tr-none max-w-[80%] shadow text-sm">
+            ${escapeHtml(text)}
         </div>
     `;
 
-    if(buttons.length>0 && !isUser){
+    scrollBottom();
+}
 
-        html += `
-            <div class="mt-3 border-t pt-3 flex flex-col gap-2">
-        `;
+function botMessage(html, suggestions=[]){
+    const box = document.getElementById("chat-box");
 
-        buttons.forEach(btn=>{
+    let buttons = "";
 
-            html += `
-                <button
-                onclick="quick('${btn}')"
-                class="bg-gray-100 hover:bg-gray-200 transition rounded-lg py-2 px-3 text-xs font-bold text-purple-900">
-                    ${btn}
+    if(suggestions.length){
+        buttons = `<div class="flex flex-wrap gap-2 mt-3">`;
+        suggestions.forEach(suggestion => {
+            buttons += `
+                <button onclick="quickReply('${escapeJs(suggestion)}')"
+                class="bg-white border border-wa-teal text-wa-teal text-xs px-3 py-1 rounded-full hover:bg-wa-teal hover:text-white transition">
+                    ${escapeHtml(suggestion)}
                 </button>
             `;
-
         });
-
-        html += `</div>`;
-
+        buttons += `</div>`;
     }
 
-    html += `
-        <div class="text-[10px] text-right text-gray-400 mt-2">
-            ${timeNow()}
+    box.innerHTML += `
+        <div class="self-start bg-wa-in px-4 py-3 rounded-xl rounded-tl-none max-w-[88%] shadow text-sm">
+            ${html}
+            ${buttons}
         </div>
     `;
 
-    div.innerHTML = html;
-
-    chat.appendChild(div);
-
-    chat.scrollTop = chat.scrollHeight;
-
+    scrollBottom();
 }
 
-function quick(text){
-
+function quickReply(text){
     document.getElementById("chat-input").value = text;
-
     processMessage();
+}
 
+function scrollBottom(){
+    const box = document.getElementById("chat-box");
+    box.scrollTop = box.scrollHeight;
 }
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
+function productId(item){
+    return item.id || item.product_id || item.id_producto || item.sku || item.code || item.codigo || "";
+}
+
+function productName(item){
+    return item.name || item.nombre || item.product_name || item.nombre_producto || item.title || "Producto sin nombre";
+}
+
+function productPrice(item){
+    return item.price || item.precio || item.unit_price || item.precio_unitario || item.sale_price || item.final_price || 0;
+}
+
+function productStock(item){
+    return item.stock || item.stock_disponible || item.stock_available || item.quantity || item.cantidad || 0;
+}
+
+function productDescription(item){
+    return item.description || item.descripcion || item.details || item.detalle || "";
+}
+
+function productCategoryName(product){
+    if(product.category_name) return product.category_name;
+    if(product.categoria) return product.categoria;
+    if(product.category) return product.category;
+
+    const categoryId = product.category_id || product.id_categoria;
+    const category = categories.find(item => String(item.id) === String(categoryId));
+
+    return category ? (category.name || category.nombre || "") : "";
+}
+
+function formatMoney(value){
+    const number = Number(value) || 0;
+    return number.toFixed(2);
+}
+
 function normalize(text){
-
-    return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
+    return String(text || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
 }
 
-function timeNow(){
-
-    return new Date().toLocaleTimeString([],{
-        hour:'2-digit',
-        minute:'2-digit'
-    });
-
+function escapeHtml(value){
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        "\"":"&quot;",
+        "'":"&#039;"
+    }[char]));
 }
 
-/* =========================================================
-   RESET
-========================================================= */
-
-function resetAll(){
-
-    cart = [];
-    purchaseHistory = [];
-
-    const chat = document.getElementById("chat-box");
-
-    chat.innerHTML = "";
-
-    window.onload();
-
+function escapeJs(value){
+    return String(value ?? "").replace(/\\/g,"\\\\").replace(/'/g,"\\'");
 }
 
 </script>
+
 </body>
 </html>
