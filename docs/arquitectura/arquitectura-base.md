@@ -107,92 +107,93 @@ Archivos Excel (.xlsx)
 
 ```mermaid
 graph TD
+
+    %% =========================
+    %% CAPA DE PRESENTACIÓN
+    %% =========================
+
     subgraph Capa_Presentacion [1. Capa de Frontend / Presentación]
-        A[Interfaz Web Tipo Chat WhatsApp] --> B[Simulación de Mensajes Interactivos]
+
+        A[Interfaz Web Tipo Chat WhatsApp]
+            --> B[Simulación de Mensajes Interactivos]
+
         B --> C[Captura de Inputs de Usuario]
+
     end
 
+
+    %% =========================
+    %% CAPA DE LÓGICA
+    %% =========================
+
     subgraph Capa_Logica [2. Capa de Lógica del Sistema / Backend]
+
         D[Controlador de Flujo Conversacional .py]
 
         D --> E[Motor de Búsqueda de Productos]
+
         D --> F[Módulo de Consulta de Promociones]
+
         D --> G[Algoritmo de Recomendaciones según Historial]
 
         D --> M[Motor LLM / IA Conversacional]
 
-        M --> G
+        %% Interacción del LLM
         M --> E
         M --> F
+        M --> G
+
     end
+
+
+    %% =========================
+    %% CAPA DE DATOS
+    %% =========================
 
     subgraph Capa_Datos [3. Capa de Datos Simulados / Persistencia]
+
         H[(Productos.xlsx)]
+
         I[(Promociones.xlsx)]
+
         J[(Stock.xlsx)]
+
         K[(Historial_Compras.xlsx)]
+
         L[(Interacciones_Chatbot.xlsx)]
+
     end
 
-    %% Conexiones
-    A <-->|Mensajes / Eventos JSON| D
 
-    E <--->|Consulta de productos| H
-    F <--->|Promociones vigentes| I
-    G <--->|Historial de compras| K
-    G <--->|Validación de stock| J
+    %% =========================
+    %% CONEXIONES PRINCIPALES
+    %% =========================
 
-    D --->|Registro de interacciones| L
+    A <-->|Mensajes de Texto / Eventos JSON| D
 
-    %% Estilos
+    E <--->|Lectura de registros| H
+
+    F <--->|Filtro de ofertas vigentes| I
+
+    G <--->|Cruce de DNI / Celular| K
+
+    G <--->|Validación de disponibilidad| J
+
+    D --->|Log de auditoría| L
+
+
+    %% =========================
+    %% ESTILOS
+    %% =========================
+
     style Capa_Presentacion fill:#ffffff,stroke:#25D366,stroke-width:2px
+
     style Capa_Logica fill:#ffffff,stroke:#333333,stroke-width:1.5px
+
     style Capa_Datos fill:#ffffff,stroke:#217346,stroke-width:2px
 
     style M fill:#f5f5ff,stroke:#6C63FF,stroke-width:2px
 ```
-```
-# 3. Descripción de las Capas del Sistema
-
----
-
-## 3.1 Capa de Presentación
-
-> Encargada de la interacción directa con el usuario mediante una interfaz web que simula el comportamiento visual y conversacional de WhatsApp Business.
-
-<table>
-<tr>
-<td width="50%">
-
-### Funciones Principales
-
-- Mostrar mensajes del chatbot.
-- Simular conversaciones en tiempo real.
-- Capturar entradas del usuario.
-- Gestionar botones y listas interactivas.
-- Enviar solicitudes HTTP al backend.
-
-</td>
-
-<td width="50%">
-
-### Tecnologías Utilizadas
-
-| Tecnología | Función |
-|---|---|
-| HTML5 | Estructura de la interfaz |
-| CSS3 | Diseño visual y estilos |
-| JavaScript | Interactividad y eventos |
-
-</td>
-</tr>
-</table>
-
-<details>
-<summary><strong>Flujo de interacción de la interfaz</strong></summary>
-
-```text
-Usuario → Interfaz Web → Captura de mensaje → Envío HTTP → Backend
 ```
 
 </details>
