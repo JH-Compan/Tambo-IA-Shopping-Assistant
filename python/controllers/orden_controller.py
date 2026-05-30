@@ -63,13 +63,14 @@ def crear_orden():
 
             # Insertar en SALES_order_items
             supabase.table("sales_order_items").insert({
-                "id":        str(uuid.uuid4()),
-                "order_id":  orden_id,
-                "item_id":   item_id,
-                "item_type": item_type,
-                "quantity":  quantity,
-                "unit_price": price,
-                "subtotal":  quantity * price
+                "id":           str(uuid.uuid4()),
+                "order_id":     orden_id,
+                "item_type":    item_type,
+                "product_id":   item_id if item_type == "producto" else None,
+                "promotion_id": item_id if item_type == "promocion" else None,
+                "quantity":     quantity,
+                "unit_price":   price,
+                "subtotal":     quantity * price
             }).execute()
 
             # Descontar stock en CAT_products si es producto
