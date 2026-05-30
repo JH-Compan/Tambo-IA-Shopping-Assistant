@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TamboBot — Selecciona tu usuario</title>
+<title>TamboBot — Acceso</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
     theme: {
         extend: {
             colors: {
-                tambo: { purple: '#4F1D7C', yellow: '#FFCC00', soft: '#F3EEF8' },
-                wa:    { teal: '#008069', dark: '#111b21' }
+                tambo: { purple: '#4F1D7C', yellow: '#FFCC00' },
+                wa:    { teal: '#008069' }
             }
         }
     }
@@ -21,130 +21,187 @@ tailwind.config = {
 
 <body class="bg-[#0b141a] min-h-screen flex justify-center items-center p-4">
 
-<div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+<div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
 
     <!-- HEADER -->
-    <div class="bg-wa-teal px-6 py-5 text-white text-center">
+    <div class="bg-wa-teal px-6 py-6 text-white text-center">
         <div class="w-16 h-16 rounded-full bg-tambo-purple border-4 border-tambo-yellow flex items-center justify-center text-tambo-yellow font-bold text-2xl mx-auto mb-3">
             T+
         </div>
         <h1 class="text-xl font-bold">TamboBot IA</h1>
-        <p class="text-sm text-green-100 mt-1">Selecciona tu usuario para comenzar</p>
+        <p class="text-sm text-green-100 mt-1">Tu asistente de compras Tambo+</p>
     </div>
 
-    <!-- CONTENIDO -->
-    <div class="p-6">
-
-        <!-- CARGANDO -->
-        <div id="loading" class="text-center py-8 text-gray-500">
-            <div class="animate-spin w-8 h-8 border-4 border-wa-teal border-t-transparent rounded-full mx-auto mb-3"></div>
-            Cargando usuarios...
-        </div>
-
-        <!-- ERROR -->
-        <div id="error" class="hidden text-center py-8">
-            <p class="text-red-500 mb-4">No se pudo conectar al backend.</p>
-            <p class="text-sm text-gray-500 mb-4">Verifica que Flask esté corriendo con:<br><code class="bg-gray-100 px-2 py-1 rounded">python app.py</code></p>
-            <button onclick="cargarUsuarios()"
-            class="bg-wa-teal text-white px-4 py-2 rounded-full text-sm hover:scale-105 transition">
-                Reintentar
-            </button>
-        </div>
-
-        <!-- LISTA DE USUARIOS -->
-        <div id="lista-usuarios" class="hidden">
-            <p class="text-sm text-gray-500 mb-4 text-center">¿Quién eres hoy?</p>
-            <div id="usuarios-grid" class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
-                <!-- Se llena dinámicamente -->
-            </div>
-        </div>
-
+    <!-- TABS -->
+    <div class="flex border-b">
+        <button id="tab-login"
+            onclick="switchTab('login')"
+            class="flex-1 py-3 text-sm font-bold text-wa-teal border-b-2 border-wa-teal">
+            Iniciar sesión
+        </button>
+        <button id="tab-registro"
+            onclick="switchTab('registro')"
+            class="flex-1 py-3 text-sm font-bold text-gray-400">
+            Registrarse
+        </button>
     </div>
+
+    <!-- MENSAJE ERROR/ÉXITO -->
+    <div id="msg" class="hidden mx-6 mt-4 text-sm px-4 py-3 rounded-lg"></div>
+
+    <!-- ── PANEL LOGIN ── -->
+    <div id="panel-login" class="p-6">
+        <div class="mb-4">
+            <label class="block text-sm font-bold text-gray-700 mb-1">Usuario</label>
+            <input id="login-alias" type="text" placeholder="Ej: Maria"
+                class="w-full border rounded-xl px-4 py-2 text-sm outline-none focus:border-wa-teal"
+                onkeypress="handleKey(event,'login')"/>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-gray-700 mb-1">Contraseña</label>
+            <input id="login-pass" type="password" placeholder="Ej: USR031"
+                class="w-full border rounded-xl px-4 py-2 text-sm outline-none focus:border-wa-teal"
+                onkeypress="handleKey(event,'login')"/>
+            <p class="text-xs text-gray-400 mt-1">Tu contraseña es tu código (USR001, USR002...)</p>
+        </div>
+        <button onclick="login()"
+            class="w-full bg-wa-teal text-white font-bold py-3 rounded-xl hover:scale-105 transition">
+            Ingresar
+        </button>
+        <p class="text-center text-xs text-gray-400 mt-4">
+            ¿No tienes cuenta?
+            <span onclick="switchTab('registro')" class="text-wa-teal font-bold cursor-pointer">Regístrate</span>
+        </p>
+    </div>
+
+    <!-- ── PANEL REGISTRO ── -->
+    <div id="panel-registro" class="p-6 hidden">
+        <div class="mb-4">
+            <label class="block text-sm font-bold text-gray-700 mb-1">Nombre de usuario</label>
+            <input id="reg-alias" type="text" placeholder="Ej: Maria"
+                class="w-full border rounded-xl px-4 py-2 text-sm outline-none focus:border-wa-teal"/>
+            <p class="text-xs text-gray-400 mt-1">Este será tu nombre visible en el chat</p>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-gray-700 mb-1">Segmento</label>
+            <select id="reg-segment"
+                class="w-full border rounded-xl px-4 py-2 text-sm outline-none focus:border-wa-teal bg-white">
+                <option value="">Selecciona tu perfil...</option>
+                <option value="estudiante">🎓 Estudiante</option>
+                <option value="trabajador">💼 Trabajador</option>
+                <option value="hogar">🏠 Hogar</option>
+                <option value="oficina">🏢 Oficina</option>
+                <option value="ahorrador">💰 Ahorrador</option>
+                <option value="snack_lovers">🍿 Snack Lovers</option>
+                <option value="comprador_rapido">⚡ Comprador Rápido</option>
+                <option value="familia">👨‍👩‍👧 Familia</option>
+            </select>
+        </div>
+        <button onclick="registro()"
+            class="w-full bg-tambo-purple text-white font-bold py-3 rounded-xl hover:scale-105 transition">
+            Crear cuenta
+        </button>
+        <p class="text-center text-xs text-gray-400 mt-4">
+            ¿Ya tienes cuenta?
+            <span onclick="switchTab('login')" class="text-wa-teal font-bold cursor-pointer">Inicia sesión</span>
+        </p>
+    </div>
+
 </div>
 
 <script>
 const API_BASE = "http://localhost:5000";
 
-async function cargarUsuarios() {
-    document.getElementById("loading").classList.remove("hidden");
-    document.getElementById("error").classList.add("hidden");
-    document.getElementById("lista-usuarios").classList.add("hidden");
+/* ── TABS ── */
+function switchTab(tab) {
+    hideMsg();
+    document.getElementById("panel-login").classList.toggle("hidden",    tab !== "login");
+    document.getElementById("panel-registro").classList.toggle("hidden", tab !== "registro");
+    document.getElementById("tab-login").className    = `flex-1 py-3 text-sm font-bold ${tab==="login"    ? "text-wa-teal border-b-2 border-wa-teal" : "text-gray-400"}`;
+    document.getElementById("tab-registro").className = `flex-1 py-3 text-sm font-bold ${tab==="registro" ? "text-wa-teal border-b-2 border-wa-teal" : "text-gray-400"}`;
+}
 
-    try {
-        const res = await fetch(`${API_BASE}/api/usuarios`);
-        if (!res.ok) throw new Error("Error al cargar usuarios");
-        const usuarios = await res.json();
+function handleKey(e, accion) {
+    if (e.key === "Enter") accion === "login" ? login() : registro();
+}
 
-        renderizarUsuarios(usuarios);
-        document.getElementById("loading").classList.add("hidden");
-        document.getElementById("lista-usuarios").classList.remove("hidden");
-    } catch (e) {
-        document.getElementById("loading").classList.add("hidden");
-        document.getElementById("error").classList.remove("hidden");
+/* ── MENSAJES ── */
+function showMsg(texto, tipo) {
+    const el = document.getElementById("msg");
+    el.textContent = texto;
+    el.className = `mx-6 mt-4 text-sm px-4 py-3 rounded-lg ${tipo === "error" ? "bg-red-50 border border-red-300 text-red-700" : "bg-green-50 border border-green-300 text-green-700"}`;
+    el.classList.remove("hidden");
+}
+
+function hideMsg() {
+    document.getElementById("msg").classList.add("hidden");
+}
+
+/* ── LOGIN ── */
+async function login() {
+    hideMsg();
+    const name_alias = document.getElementById("login-alias").value.trim();
+    const password   = document.getElementById("login-pass").value.trim();
+
+    if (!name_alias || !password) {
+        showMsg("Completa todos los campos.", "error");
+        return;
     }
-}
 
-function renderizarUsuarios(usuarios) {
-    const grid = document.getElementById("usuarios-grid");
-    grid.innerHTML = "";
-
-    const colores = [
-        "bg-purple-100 border-purple-300 text-purple-800",
-        "bg-teal-100 border-teal-300 text-teal-800",
-        "bg-yellow-100 border-yellow-300 text-yellow-800",
-        "bg-blue-100 border-blue-300 text-blue-800",
-        "bg-pink-100 border-pink-300 text-pink-800",
-        "bg-green-100 border-green-300 text-green-800",
-    ];
-
-    const segmentoEmoji = {
-        "estudiante": "🎓",
-        "trabajador": "💼",
-        "hogar": "🏠",
-    };
-
-    usuarios.forEach((usuario, i) => {
-        const color = colores[i % colores.length];
-        const emoji = segmentoEmoji[usuario.segment] || "👤";
-        const btn = document.createElement("button");
-        btn.className = `border-2 rounded-xl p-3 text-left hover:scale-105 transition ${color}`;
-        btn.innerHTML = `
-            <div class="text-2xl mb-1">${emoji}</div>
-            <div class="font-bold text-sm">${usuario.name_alias || usuario.user_code}</div>
-            <div class="text-xs opacity-70">${usuario.user_code}</div>
-            <div class="text-xs opacity-60 capitalize">${usuario.segment || ""}</div>
-        `;
-        btn.onclick = () => seleccionarUsuario(usuario);
-        grid.appendChild(btn);
-    });
-}
-
-async function seleccionarUsuario(usuario) {
-    // Validar con el backend
     try {
-        const res = await fetch(`${API_BASE}/api/usuarios/${usuario.user_code}`);
+        const res  = await fetch(`${API_BASE}/api/usuarios/login`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ name_alias, password })
+        });
         const data = await res.json();
 
-        if (!data.valido) {
-            alert("Usuario no válido. Intenta con otro.");
-            return;
+        if (data.valido) {
+            sessionStorage.setItem("tambo_user_id",      data.usuario.user_code);
+            sessionStorage.setItem("tambo_user_name",    data.usuario.name_alias);
+            sessionStorage.setItem("tambo_user_segment", data.usuario.segment || "");
+            window.location.href = "chat.html";
+        } else {
+            showMsg(data.error || "Usuario o contraseña incorrectos.", "error");
         }
-
-        // Guardar en sessionStorage y redirigir al chat
-        sessionStorage.setItem("tambo_user_id",   usuario.user_code);
-        sessionStorage.setItem("tambo_user_name", usuario.name_alias || usuario.user_code);
-        sessionStorage.setItem("tambo_user_segment", usuario.segment || "");
-
-        // Redirigir al chat
-        window.location.href = "chat.html";
-
     } catch (e) {
-        alert("Error al validar el usuario. Verifica el backend.");
+        showMsg("No se pudo conectar al backend.", "error");
     }
 }
 
-// Iniciar
-cargarUsuarios();
+/* ── REGISTRO ── */
+async function registro() {
+    hideMsg();
+    const name_alias = document.getElementById("reg-alias").value.trim();
+    const segment    = document.getElementById("reg-segment").value;
+
+    if (!name_alias) { showMsg("Escribe tu nombre de usuario.", "error"); return; }
+    if (!segment)    { showMsg("Selecciona tu segmento.",       "error"); return; }
+
+    try {
+        const res  = await fetch(`${API_BASE}/api/usuarios/registro`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ name_alias, segment })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            showMsg(`✅ Cuenta creada. Tu código es: ${data.usuario.user_code} — guárdalo, es tu contraseña.`, "success");
+            // Esperar 3 segundos y pasar al login con los datos prellenados
+            setTimeout(() => {
+                switchTab("login");
+                document.getElementById("login-alias").value = name_alias;
+                document.getElementById("login-pass").value  = data.usuario.user_code;
+                showMsg(`Usa tu código ${data.usuario.user_code} como contraseña para ingresar.`, "success");
+            }, 3000);
+        } else {
+            showMsg(data.error || "Error al registrar.", "error");
+        }
+    } catch (e) {
+        showMsg("No se pudo conectar al backend.", "error");
+    }
+}
 </script>
 
 </body>
