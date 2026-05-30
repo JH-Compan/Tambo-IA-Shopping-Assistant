@@ -411,39 +411,46 @@ function showCart() {
     botMessage(html, ["Finalizar compra", "Ver productos", "Ver promociones"]);
 }
 
-async function finishPurchase() {
-    if (!cart.length) { botMessage("No tienes productos en el carrito.", ["Ver productos"]); return; }
-
-    const total  = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-    const ticket = `T-${Date.now()}`;
-
-    try {
-        await apiPost("/api/ordenes", {
-            user_id:         USER_ID,
-            conversation_id: conversationId,
-            items:           cart.map(item => ({
-                item_id:    item.id,
-                item_type:  item.type,
-                quantity:   item.qty,
-                unit_price: item.price
-            })),
-            total: total
-        });
-    } catch (e) {
-        console.warn("No se pudo registrar la orden en el backend:", e);
+async function finishPurchase(){
+    if(!cart.length){
+        botMessage("No tienes productos en el carrito.",["Ver productos","Ver promociones"]);
+        return;
     }
 
-    // Recargar catálogo con stock actualizado desde Supabase
-    catalogLoaded = false;
-    await loadCatalog();
+    const total = cart.reduce((sum,item)=> sum + item.price * item.qty, 0);
 
-    cart = [];
-    botMessage(`
-        <strong>¡Compra finalizada!</strong><br><br>
-        Ticket: <strong>${ticket}</strong><br>
-        Total: <strong>S/ ${formatMoney(total)}</strong><br><br>
-        Gracias por comprar en Tambo+, <strong>${escapeHtml(USER_NAME || USER_ID)}</strong> 🎉
-    `, ["Ver productos", "Ver promociones"]);
+    // Armar los items para enviar al backend
+    const items = cart.map(item => ({
+        item_id:    String(item.id),
+        item_type:  item.type === "promoción" ? "promotion" : "product",
+        quantity:   item.qty,
+        unit_price: item.price
+    }));
+
+    try {
+        const resp = await apiPost("/api/ordenes", {
+            user_id:         currentUserId || "guest-user",
+            conversation_id: currentConversationId || null,
+            items:           items,
+            total:           total
+        });
+
+        // Vaciar carrito solo si el backend confirmó
+        cart = [];
+
+        const ticket = resp.orden_id || `T-${Date.now()}`;
+
+        botMessage(`
+            <strong>Compra finalizada</strong><br><br>
+            Ticket: <strong>${ticket}</strong><br>
+            Total pagado: <strong>S/ ${formatMoney(total)}</strong><br><br>
+            Gracias por comprar en Tambo+.
+        `,["Ver productos","Ver promociones","Nueva recomendación IA"]);
+
+    } catch(e) {
+        botMessage("Hubo un error al registrar tu compra. Intenta de nuevo.",["Ver carrito"]);
+        console.error("[finishPurchase error]", e);
+    }
 }
 
 /* =========================================================
