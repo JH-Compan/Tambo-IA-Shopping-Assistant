@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TamboBot IA - Chat</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                tambo: { purple: '#4F1D7C', yellow: '#FFCC00', soft: '#F3EEF8' },
+                wa:    { teal: '#008069', dark: '#111b21', bg: '#efeae2', out: '#d9fdd3', in: '#ffffff' }
+            }
+        }
+    }
+}
+</script>
+<style>
+body { font-family: Arial, sans-serif; }
+.wa-bg { background-image: url('https://i.imgur.com/UYiroys.png'); }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+</style>
+</head>
+
+<body class="bg-[#0b141a] h-screen flex justify-center items-center overflow-hidden">
+
+<div class="w-full max-w-md h-full md:h-[95%] md:rounded-2xl overflow-hidden shadow-2xl bg-white flex flex-col">
+
+    <!-- HEADER -->
+    <header class="bg-wa-teal text-white px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full bg-tambo-purple flex items-center justify-center border-2 border-tambo-yellow font-bold text-tambo-yellow">
+                T+
+            </div>
+            <div>
+                <h2 class="font-bold">Tambo+</h2>
+                <p id="bot-status" class="text-xs text-green-100">conectando...</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <div id="user-badge" class="text-xs bg-tambo-purple px-3 py-1 rounded-full font-bold border border-tambo-yellow">
+                ...
+            </div>
+            <button onclick="cerrarSesion()"
+            class="text-xs bg-red-700 px-3 py-1 rounded-lg font-bold hover:scale-105 transition"
+            title="Cerrar sesión">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- CHAT -->
+    <main id="chat-box"
+    class="flex-1 overflow-y-auto p-4 wa-bg bg-wa-bg flex flex-col gap-3 no-scrollbar">
+        <div class="self-center bg-[#fff3c4] text-[#6b5b22] text-[11px] px-3 py-2 rounded-lg text-center shadow">
+            Tambo+ conectado al backend Flask y Supabase
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-[#f0f2f5] p-3 flex items-center gap-2 border-t">
+        <input
+            id="chat-input"
+            type="text"
+            placeholder="Escribe un mensaje..."
+            class="flex-1 rounded-full px-4 py-2 text-sm outline-none border"
+            onkeypress="handleKey(event)"
+        />
+        <button onclick="processMessage()"
+        class="bg-wa-teal text-white w-11 h-11 rounded-full hover:scale-105 transition">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </footer>
+</div>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN
+========================================================= */
+const API_BASE = "http://localhost:5000";
+
+// Verificar que hay usuario logueado
+const USER_ID      = sessionStorage.getItem("tambo_user_id");
+const USER_NAME    = sessionStorage.getItem("tambo_user_name");
+const USER_SEGMENT = sessionStorage.getItem("tambo_user_segment");
+
+if (!USER_ID) {
+    // Si no hay usuario, redirigir al login
+    window.location.href = "index.html";
+}
+
+let products      = [];
+let categories    = [];
+let promotions    = [];
+let cart          = [];
+let conversationId = sessionStorage.getItem("tambo_conversation_id") || null;
+let catalogLoaded  = false;
+
+/* =========================================================
+   INIT
+========================================================= */
+window.onload = async () => {
+    // Mostrar usuario en header
+    document.getElementById("user-badge").textContent = USER_NAME || USER_ID;
+    await initializeApp();
+};
+
+async function initializeApp() {
+    setStatus("conectando backend...");
+    try {
+        await checkBackend();
+        await loadCatalog();
+        setStatus("en línea");
+        botMessage(`
+            ¡Hola, <strong>${escapeHtml(USER_NAME || USER_ID)}</strong>! Bienvenido a <strong>Tambo+</strong> 🛒<br><br>
+            Soy <strong>TamboBot IA</strong>. ¿Qué deseas hoy?
+        `, [
+            "Ver productos",
+            "Ver bebidas",
+            "Ver snacks",
+            "Ver comida",
+            "Ver promociones",
+            "Mi recomendación IA"
+        ]);
+    } catch (error) {
+        setStatus("backend no disponible");
+        botMessage(`No pude conectarme al backend.<br><br>
+            Verifica que Flask esté corriendo con:<br>
+            <code>cd python</code> → <code>python app.py</code>`,
+            ["Reintentar conexión"]
+        );
+    }
+}
+
+/* =========================================================
+   API
+========================================================= */
+async function apiGet(path) {
+    const res = await fetch(`${API_BASE}${path}`);
+    if (!res.ok) throw new Error(`Error GET ${path}: ${res.status}`);
+    return await res.json();
+}
+
+async function apiPost(path, payload) {
+    const res = await fetch(`${API_BASE}${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`Error POST ${path}: ${res.status} ${err}`);
+    }
+    return await res.json();
+}
+
+async function checkBackend()  { await apiGet("/api/health"); }
+
+async function loadCatalog() {
+    const [productosData, categoriasData, promocionesData] = await Promise.all([
+        apiGet("/api/productos"),
+        apiGet("/api/categorias"),
+        apiGet("/api/promociones")
+    ]);
+    products   = normalizeArray(productosData);
+    categories = normalizeArray(categoriasData);
+    promotions = normalizeArray(promocionesData);
+    catalogLoaded = true;
+}
+
+async function searchProducts(text) {
+    const data = await apiGet(`/api/productos/buscar?q=${encodeURIComponent(text || "")}`);
+    return normalizeArray(data);
+}
+
+async function askBackend(message) {
+    const data = await apiPost("/api/chat", {
+        user_id: USER_ID,
+        mensaje: message,
+        conversation_id: conversationId
+    });
+    if (data.conversation_id) {
+        conversationId = data.conversation_id;
+        sessionStorage.setItem("tambo_conversation_id", conversationId);
+    }
+    return data;
+}
+
+/* =========================================================
+   CERRAR SESIÓN
+========================================================= */
+async function cerrarSesion() {
+    // Notificar al backend para cerrar la conversación
+    if (conversationId) {
+        try {
+            await apiPost("/api/chat/cerrar", {
+                conversation_id: conversationId,
+                user_id: USER_ID
+            });
+        } catch (e) {
+            console.warn("No se pudo cerrar la conversación en el backend:", e);
+        }
+    }
+    // Limpiar sesión
+    sessionStorage.removeItem("tambo_user_id");
+    sessionStorage.removeItem("tambo_user_name");
+    sessionStorage.removeItem("tambo_user_segment");
+    sessionStorage.removeItem("tambo_conversation_id");
+    window.location.href = "index.html";
+}
+
+/* =========================================================
+   INPUT
+========================================================= */
+function handleKey(e) { if (e.key === "Enter") processMessage(); }
+
+async function processMessage() {
+    const input = document.getElementById("chat-input");
+    const text  = input.value.trim();
+    if (!text) return;
+    userMessage(text);
+    input.value = "";
+    setStatus("procesando IA...");
+    try {
+        await chatbot(text);
+        setStatus("en línea");
+    } catch (error) {
+        setStatus("error backend");
+        botMessage(`Error consultando el backend.<br>${escapeHtml(error.message)}`, ["Reintentar conexión"]);
+    }
+}
+
+/* =========================================================
+   CHATBOT ENGINE
+========================================================= */
+async function chatbot(message) {
+    const q = normalize(message);
+
+    if (q.includes("reintentar")) { await initializeApp(); return; }
+    if (!catalogLoaded) await loadCatalog();
+
+    if (q.includes("carrito") || q.includes("ver compra")) { showCart(); return; }
+    if (q.includes("finalizar") || q.includes("cerrar compra") || q.includes("pagar")) { finishPurchase(); return; }
+    if (q.includes("producto") || q.includes("catalogo") || q.includes("catálogo")) { showProducts(products, "Productos disponibles"); return; }
+    if (q.includes("bebida")) { await showCategoryOrSearch("bebida", "Bebidas disponibles"); return; }
+    if (q.includes("snack") || q.includes("dulce")) { await showCategoryOrSearch(q.includes("dulce") ? "dulce" : "snack", "Snacks y dulces"); return; }
+    if (q.includes("comida")) { await showCategoryOrSearch("comida", "Comida lista"); return; }
+    if (q.includes("promo") || q.includes("oferta") || q.includes("descuento")) { showPromotions(promotions); return; }
+    if (q.includes("recomend") || q.includes("recomiendame") || q === "ia" || q.includes("mi recomendacion")) { await showBackendRecommendation(message); return; }
+
+    const localMatches = findLocalProducts(q);
+    if (localMatches.length) { showProducts(localMatches, `Resultados para "${escapeHtml(message)}"`); return; }
+
+    await showBackendRecommendation(message);
+}
+
+/* =========================================================
+   PRODUCTOS
+========================================================= */
+function showProducts(items, title = "Productos") {
+    if (!items || !items.length) {
+        botMessage("No encontré productos disponibles.", ["Ver promociones"]);
+        return;
+    }
+    let html = `<strong>${escapeHtml(title)}</strong><br><br>`;
+    items.slice(0, 10).forEach(p => { html += productCard(p); });
+    botMessage(html, ["Ver promociones", "Mi carrito", "Mi recomendación IA"]);
+}
+
+async function showCategoryOrSearch(term, title) {
+    const local = findProductsByCategoryOrText(term);
+    if (local.length) { showProducts(local, title); return; }
+    const remote = await searchProducts(term);
+    showProducts(remote, title);
+}
+
+function findLocalProducts(text) {
+    const q = normalize(text);
+    return products.filter(p =>
+        normalize(productName(p)).includes(q) ||
+        normalize(productCategoryName(p)).includes(q) ||
+        normalize(productDescription(p)).includes(q)
+    );
+}
+
+function findProductsByCategoryOrText(text) {
+    const q = normalize(text);
+    return products.filter(p =>
+        normalize(productCategoryName(p)).includes(q) ||
+        normalize(productName(p)).includes(q) ||
+        normalize(productDescription(p)).includes(q)
+    );
+}
+
+function productCard(product) {
+    const id    = productId(product);
+    const name  = productName(product);
+    const price = productPrice(product);
+    const cat   = productCategoryName(product);
+    const stock = productStock(product);
+    const desc  = productDescription(product);
+    return `
+        <div class="bg-white border rounded-xl p-3 mb-2 shadow-sm">
+            <div class="font-bold text-tambo-purple">${escapeHtml(name)}</div>
+            <div class="text-xs text-gray-500">${escapeHtml(cat || "Producto")}</div>
+            ${desc ? `<div class="text-xs text-gray-600 mt-1">${escapeHtml(desc)}</div>` : ""}
+            <div class="flex justify-between items-center mt-2">
+                <span class="font-bold text-green-700">S/ ${formatMoney(price)}</span>
+                <span class="text-xs text-gray-500">Stock: ${escapeHtml(String(stock))}</span>
+            </div>
+            <button onclick="addProductToCartById('${escapeJs(id)}')"
+            class="mt-2 bg-wa-teal text-white text-xs px-3 py-1 rounded-full hover:scale-105 transition">
+                Agregar al carrito
+            </button>
+        </div>`;
+}
+
+/* =========================================================
+   PROMOCIONES
+========================================================= */
+function showPromotions(items) {
+    if (!items || !items.length) {
+        botMessage("No encontré promociones activas.", ["Ver productos", "Mi recomendación IA"]);
+        return;
+    }
+    let html = "<strong>Promociones activas</strong><br><br>";
+    items.slice(0, 10).forEach(p => { html += promotionCard(p); });
+    botMessage(html, ["Ver productos", "Mi carrito", "Mi recomendación IA"]);
+}
+
+function promotionCard(promo) {
+    const id    = productId(promo);
+    const name  = promo.title  || promo.name  || promo.nombre  || `Promoción ${id}`;
+    const price = promo.promo_price || promo.price || promo.precio || 0;
+    const desc  = promo.description || promo.descripcion || "Promoción activa";
+    const disc  = promo.discount_percent ? `${Number(promo.discount_percent).toFixed(0)}% desc.` : "";
+    return `
+        <div class="bg-[#fff8d6] border border-yellow-300 rounded-xl p-3 mb-2 shadow-sm">
+            <div class="font-bold text-tambo-purple">${escapeHtml(name)}</div>
+            <div class="text-xs text-gray-600 mt-1">${escapeHtml(desc)}</div>
+            <div class="flex justify-between items-center mt-2">
+                <span class="font-bold text-green-700">S/ ${formatMoney(price)}</span>
+                ${disc ? `<span class="text-xs text-yellow-700 font-bold">${escapeHtml(disc)}</span>` : ""}
+            </div>
+            <button onclick="addPromotionToCartById('${escapeJs(id)}')"
+            class="mt-2 bg-tambo-purple text-white text-xs px-3 py-1 rounded-full hover:scale-105 transition">
+                Agregar promoción
+            </button>
+        </div>`;
+}
+
+/* =========================================================
+   RECOMENDACIÓN BACKEND
+========================================================= */
+async function showBackendRecommendation(message) {
+    const data      = await askBackend(message);
+    const respuesta = data.respuesta || "El backend respondió correctamente.";
+    const items     = normalizeArray(data.items);
+    const tipo      = data.tipo || "texto";
+    let html = `<strong>TamboBot IA</strong><br>${escapeHtml(respuesta)}<br><br>`;
+    if (items.length) {
+        items.slice(0, 5).forEach(item => {
+            html += tipo === "promociones" ? promotionCard(item) : productCard(item);
+        });
+    }
+    botMessage(html, ["Ver productos", "Ver promociones", "Mi carrito"]);
+}
+
+/* =========================================================
+   CARRITO
+========================================================= */
+function addProductToCartById(id) {
+    const product = products.find(p => String(productId(p)) === String(id));
+    if (!product) { botMessage("No pude encontrar ese producto.", ["Ver productos"]); return; }
+    addItemToCart({
+        id:    productId(product),
+        name:  productName(product),
+        price: Number(productPrice(product)) || 0,
+        type:  "producto"
+    });
+}
+
+function addPromotionToCartById(id) {
+    const promo = promotions.find(p => String(productId(p)) === String(id));
+    if (!promo) { botMessage("No pude encontrar esa promoción.", ["Ver promociones"]); return; }
+    addItemToCart({
+        id:    productId(promo),
+        name:  promo.title || promo.name || promo.nombre || `Promoción ${productId(promo)}`,
+        price: Number(promo.promo_price || promo.price || promo.precio || 0),
+        type:  "promocion"
+    });
+}
+
+function addItemToCart(item) {
+    const existing = cart.find(c => c.id === item.id && c.type === item.type);
+    if (existing) { existing.qty += 1; }
+    else          { cart.push({ ...item, qty: 1 }); }
+    botMessage(`Agregué <strong>${escapeHtml(item.name)}</strong> al carrito.`,
+        ["Ver carrito", "Finalizar compra", "Ver productos"]);
+}
+
+function showCart() {
+    if (!cart.length) { botMessage("Tu carrito está vacío.", ["Ver productos", "Ver promociones"]); return; }
+    let total = 0;
+    let html  = "<strong>Tu carrito</strong><br><br>";
+    cart.forEach(item => {
+        const sub = item.price * item.qty;
+        total += sub;
+        html += `
+            <div class="bg-white border rounded-xl p-3 mb-2">
+                <div class="font-bold">${escapeHtml(item.name)}</div>
+                <div class="text-xs text-gray-500">${escapeHtml(item.type)} x ${item.qty}</div>
+                <div class="font-bold text-green-700">S/ ${formatMoney(sub)}</div>
+            </div>`;
+    });
+    html += `<br><strong>Total: S/ ${formatMoney(total)}</strong>`;
+    botMessage(html, ["Finalizar compra", "Ver productos", "Ver promociones"]);
+}
+
+async function finishPurchase() {
+    if (!cart.length) { botMessage("No tienes productos en el carrito.", ["Ver productos"]); return; }
+
+    const total  = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+    const ticket = `T-${Date.now()}`;
+
+    // Registrar la orden en el backend
+    try {
+        await apiPost("/api/ordenes", {
+            user_id:         USER_ID,
+            conversation_id: conversationId,
+            items:           cart.map(item => ({
+                item_id:    item.id,
+                item_type:  item.type,  // "producto" o "promocion"
+                quantity:   item.qty,
+                unit_price: item.price
+            })),
+            total: total
+        });
+    } catch (e) {
+        console.warn("No se pudo registrar la orden en el backend:", e);
+    }
+
+    catalogLoaded = false;  // ← AQUÍ, esta línea
+    
+
+    cart = [];
+    botMessage(`
+        <strong>¡Compra finalizada!</strong><br><br>
+        Ticket: <strong>${ticket}</strong><br>
+        Total: <strong>S/ ${formatMoney(total)}</strong><br><br>
+        Gracias por comprar en Tambo+, <strong>${escapeHtml(USER_NAME || USER_ID)}</strong> 
+    `, ["Ver productos", "Ver promociones"]);
+}
+
+/* =========================================================
+   UI HELPERS
+========================================================= */
+function setStatus(text) { document.getElementById("bot-status").innerText = text; }
+
+function userMessage(text) {
+    const box = document.getElementById("chat-box");
+    box.innerHTML += `
+        <div class="self-end bg-wa-out px-4 py-2 rounded-xl rounded-tr-none max-w-[80%] shadow text-sm">
+            ${escapeHtml(text)}
+        </div>`;
+    scrollBottom();
+}
+
+function botMessage(html, suggestions = []) {
+    const box = document.getElementById("chat-box");
+    let buttons = "";
+    if (suggestions.length) {
+        buttons = `<div class="flex flex-wrap gap-2 mt-3">`;
+        suggestions.forEach(s => {
+            buttons += `
+                <button onclick="quickReply('${escapeJs(s)}')"
+                class="bg-white border border-wa-teal text-wa-teal text-xs px-3 py-1 rounded-full hover:bg-wa-teal hover:text-white transition">
+                    ${escapeHtml(s)}
+                </button>`;
+        });
+        buttons += `</div>`;
+    }
+    box.innerHTML += `
+        <div class="self-start bg-wa-in px-4 py-3 rounded-xl rounded-tl-none max-w-[88%] shadow text-sm">
+            ${html}${buttons}
+        </div>`;
+    scrollBottom();
+}
+
+function quickReply(text) {
+    document.getElementById("chat-input").value = text;
+    processMessage();
+}
+
+function scrollBottom() {
+    const box = document.getElementById("chat-box");
+    box.scrollTop = box.scrollHeight;
+}
+
+function normalizeArray(data) {
+    if (Array.isArray(data))              return data;
+    if (data && Array.isArray(data.data)) return data.data;
+    if (data && Array.isArray(data.items))return data.items;
+    return [];
+}
+
+/* =========================================================
+   ACCESSORS
+========================================================= */
+function productId(item)           { return item.id || item.product_id || item.id_producto || item.sku || ""; }
+function productName(item)         { return item.name || item.nombre || item.title || "Producto sin nombre"; }
+function productPrice(item)        { return item.price || item.precio || item.unit_price || 0; }
+function productStock(item)        { return item.stock || item.stock_disponible || 0; }
+function productDescription(item)  { return item.description || item.descripcion || ""; }
+
+function productCategoryName(product) {
+    if (product.category_name) return product.category_name;
+    if (product.categoria)     return product.categoria;
+    if (product.category)      return product.category;
+    const catId = product.category_id || product.id_categoria;
+    const cat   = categories.find(c => String(c.id) === String(catId));
+    return cat ? (cat.name || cat.nombre || "") : "";
+}
+
+function formatMoney(value) { return (Number(value) || 0).toFixed(2); }
+
+function normalize(text) {
+    return String(text || "").toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+function escapeJs(value) {
+    return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+</script>
+
+</body>
+</html>
