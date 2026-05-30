@@ -37,21 +37,9 @@ Se implementó la consulta de promociones mediante el chatbot utilizando la base
 1. Integración entre backend Flask y Supabase.
    ![Integración Backend y Supabase](Evidencia1.jpeg)  
 2. Consulta de promociones activas.  
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
+   ![Consulta de promociones](Evidencia2.jpeg)  
 3. Respuesta mostrada en la interfaz conversacional.  
-   ![][image2]  
+   ![Interfaz](Evidencia5.jpeg)  
    
 
 ### **Estado**
