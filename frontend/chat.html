@@ -427,14 +427,13 @@ async function finishPurchase() {
     const total  = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
     const ticket = `T-${Date.now()}`;
 
-    // Registrar la orden en el backend
     try {
         await apiPost("/api/ordenes", {
             user_id:         USER_ID,
             conversation_id: conversationId,
             items:           cart.map(item => ({
                 item_id:    item.id,
-                item_type:  item.type,  // "producto" o "promocion"
+                item_type:  item.type,
                 quantity:   item.qty,
                 unit_price: item.price
             })),
@@ -444,15 +443,15 @@ async function finishPurchase() {
         console.warn("No se pudo registrar la orden en el backend:", e);
     }
 
-    catalogLoaded = false;  // ← AQUÍ, esta línea
-    
+    catalogLoaded = false;
+    await loadCatalog();  // ← AGREGA ESTA LÍNEA
 
     cart = [];
     botMessage(`
         <strong>¡Compra finalizada!</strong><br><br>
         Ticket: <strong>${ticket}</strong><br>
         Total: <strong>S/ ${formatMoney(total)}</strong><br><br>
-        Gracias por comprar en Tambo+, <strong>${escapeHtml(USER_NAME || USER_ID)}</strong> 
+        Gracias por comprar en Tambo+, <strong>${escapeHtml(USER_NAME || USER_ID)}</strong> 🎉
     `, ["Ver productos", "Ver promociones"]);
 }
 
