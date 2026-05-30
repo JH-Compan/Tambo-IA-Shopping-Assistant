@@ -75,7 +75,8 @@ Se inició el desarrollo de la lógica necesaria para agregar productos seleccio
 ### **Evidencias**
 
 1. Definición inicial del flujo de carrito.  
-   ![][image7]
+   ![Flujo de carrito](Evidencia7.jpeg)
+   ![Flujo adicional(Evidencia8.jpeg)
 
 ### **Estado**
 
