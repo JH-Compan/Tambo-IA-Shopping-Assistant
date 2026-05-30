@@ -1,10 +1,15 @@
 import os
-from flask import Flask, jsonify
+from pathlib import Path
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 
 from controllers.producto_controller import producto_bp
 from controllers.chat_controller import chat_bp
 from controllers.admin_controller import admin_bp
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
 
 
 def crear_app():
@@ -17,6 +22,10 @@ def crear_app():
 
     @app.route("/", methods=["GET"])
     def home():
+        return send_from_directory(FRONTEND_DIR, "index.html")
+
+    @app.route("/api", methods=["GET"])
+    def api_info():
         return jsonify({
             "message": "Backend de TamboBot activo",
             "rutas_disponibles": {
