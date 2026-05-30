@@ -55,12 +55,12 @@ Se desarrolló la funcionalidad de búsqueda de productos utilizando consultas a
 ### **Evidencias**
 
 1. Búsqueda por nombre.  
-   ![][image3]  
+   ![Busqueda por nombre](Evidencia3.jpeg)  
 2. Búsqueda por categoría.  
-   ![][image4]  
+   ![Categoria](Evidencia4.jpeg) 
 3. Visualización de resultados en la interfaz.  
-   ![][image5]  
-   ![][image6]
+   ![Interfaz](Evidencia6.jpeg)
+   ![Interfaz](Evidencia7.jpeg)
 
 ### **Estado**
 
