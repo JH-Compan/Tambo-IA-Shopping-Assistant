@@ -78,20 +78,12 @@ body { font-family: Arial, sans-serif; }
 </div>
 
 <script>
-/* =========================================================
-   CONFIGURACIÓN
-========================================================= */
 const API_BASE = "http://localhost:5000";
 
-// Verificar que hay usuario logueado
 const USER_ID      = sessionStorage.getItem("tambo_user_id");
 const USER_NAME    = sessionStorage.getItem("tambo_user_name");
 const USER_SEGMENT = sessionStorage.getItem("tambo_user_segment");
 
-if (!USER_ID) {
-    // Si no hay usuario, redirigir al login
-    window.location.href = "index.html";
-}
 if (!USER_ID) { window.location.href = "index.html"; }
 
 let products      = [];
@@ -105,7 +97,6 @@ let catalogLoaded  = false;
    INIT
 ========================================================= */
 window.onload = async () => {
-    // Mostrar usuario en header
     document.getElementById("user-badge").textContent = USER_NAME || USER_ID;
     await initializeApp();
 };
@@ -119,22 +110,11 @@ async function initializeApp() {
         botMessage(`
             ¡Hola, <strong>${escapeHtml(USER_NAME || USER_ID)}</strong>! Bienvenido a <strong>Tambo+</strong> 🛒<br><br>
             Soy <strong>TamboBot IA</strong>. ¿Qué deseas hoy?
-        `, [
-            "Ver productos",
-            "Ver bebidas",
-            "Ver snacks",
-            "Ver comida",
-            "Ver promociones",
-            "Mi recomendación IA"
-        ]);
         `, ["Ver productos", "Ver bebidas", "Ver snacks", "Ver comida", "Ver promociones", "Mi recomendación IA"]);
     } catch (error) {
         setStatus("backend no disponible");
         botMessage(`No pude conectarme al backend.<br><br>
             Verifica que Flask esté corriendo con:<br>
-            <code>cd python</code> → <code>python app.py</code>`,
-            ["Reintentar conexión"]
-        );
             <code>cd python</code> → <code>python app.py</code>`, ["Reintentar conexión"]);
     }
 }
@@ -161,7 +141,6 @@ async function apiPost(path, payload) {
     return await res.json();
 }
 
-async function checkBackend()  { await apiGet("/api/health"); }
 async function checkBackend() { await apiGet("/api/health"); }
 
 async function loadCatalog() {
@@ -198,24 +177,11 @@ async function askBackend(message) {
    CERRAR SESIÓN
 ========================================================= */
 async function cerrarSesion() {
-    // Notificar al backend para cerrar la conversación
     if (conversationId) {
         try {
-            await apiPost("/api/chat/cerrar", {
-                conversation_id: conversationId,
-                user_id: USER_ID
-            });
-        } catch (e) {
-            console.warn("No se pudo cerrar la conversación en el backend:", e);
-        }
             await apiPost("/api/chat/cerrar", { conversation_id: conversationId, user_id: USER_ID });
         } catch (e) { console.warn("No se pudo cerrar conversación:", e); }
     }
-    // Limpiar sesión
-    sessionStorage.removeItem("tambo_user_id");
-    sessionStorage.removeItem("tambo_user_name");
-    sessionStorage.removeItem("tambo_user_segment");
-    sessionStorage.removeItem("tambo_conversation_id");
     sessionStorage.clear();
     window.location.href = "index.html";
 }
@@ -247,21 +213,12 @@ async function processMessage() {
 async function chatbot(message) {
     const q = normalize(message);
 
-    if (q.includes("reintentar")) { await initializeApp(); return; }
-    if (!catalogLoaded) await loadCatalog();
     if (q.includes("reintentar"))  { await initializeApp(); return; }
 
-    if (q.includes("carrito") || q.includes("ver compra")) { showCart(); return; }
     // Siempre recargar catálogo antes de mostrar productos/promociones
     // para tener el stock actualizado
     if (q.includes("carrito") || q.includes("ver compra"))                          { showCart(); return; }
     if (q.includes("finalizar") || q.includes("cerrar compra") || q.includes("pagar")) { finishPurchase(); return; }
-    if (q.includes("producto") || q.includes("catalogo") || q.includes("catálogo")) { showProducts(products, "Productos disponibles"); return; }
-    if (q.includes("bebida")) { await showCategoryOrSearch("bebida", "Bebidas disponibles"); return; }
-    if (q.includes("snack") || q.includes("dulce")) { await showCategoryOrSearch(q.includes("dulce") ? "dulce" : "snack", "Snacks y dulces"); return; }
-    if (q.includes("comida")) { await showCategoryOrSearch("comida", "Comida lista"); return; }
-    if (q.includes("promo") || q.includes("oferta") || q.includes("descuento")) { showPromotions(promotions); return; }
-    if (q.includes("recomend") || q.includes("recomiendame") || q === "ia" || q.includes("mi recomendacion")) { await showBackendRecommendation(message); return; }
 
     if (q.includes("producto") || q.includes("catalogo") || q.includes("catálogo")) {
         await loadCatalog(); // ← SIEMPRE recarga del backend
@@ -478,7 +435,6 @@ async function finishPurchase() {
 
     // Recargar catálogo con stock actualizado desde Supabase
     catalogLoaded = false;
-    await loadCatalog();  // ← AGREGA ESTA LÍNEA
     await loadCatalog();
 
     cart = [];
@@ -536,23 +492,12 @@ function scrollBottom() {
 }
 
 function normalizeArray(data) {
-    if (Array.isArray(data))              return data;
-    if (data && Array.isArray(data.data)) return data.data;
-    if (data && Array.isArray(data.items))return data.items;
     if (Array.isArray(data))               return data;
     if (data && Array.isArray(data.data))  return data.data;
     if (data && Array.isArray(data.items)) return data.items;
     return [];
 }
 
-/* =========================================================
-   ACCESSORS
-========================================================= */
-function productId(item)           { return item.id || item.product_id || item.id_producto || item.sku || ""; }
-function productName(item)         { return item.name || item.nombre || item.title || "Producto sin nombre"; }
-function productPrice(item)        { return item.price || item.precio || item.unit_price || 0; }
-function productStock(item)        { return item.stock || item.stock_disponible || 0; }
-function productDescription(item)  { return item.description || item.descripcion || ""; }
 function productId(item)          { return item.id || item.product_id || item.id_producto || item.sku || ""; }
 function productName(item)        { return item.name || item.nombre || item.title || "Producto sin nombre"; }
 function productPrice(item)       { return item.price || item.precio || item.unit_price || 0; }
@@ -583,6 +528,5 @@ function escapeJs(value) {
     return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 </script>
-
 </body>
 </html>
