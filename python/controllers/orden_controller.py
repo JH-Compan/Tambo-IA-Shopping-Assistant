@@ -52,7 +52,6 @@ def crear_orden():
             "total_amount":    total,
             "status":          "completed",
             "order_date":      datetime.now().isoformat(),
-            "created_at":      datetime.now().isoformat()
         }).execute()
 
         # 2. Insertar cada item en SALES_order_items y descontar stock
