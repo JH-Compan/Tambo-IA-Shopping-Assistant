@@ -20,7 +20,7 @@ Construir la primera versión funcional del chatbot, permitiendo consultar promo
 | T-S1-08 | Registrar evidencias del Sprint 1 | Evidencias | Equipo | Media | Pendiente |
 
 
-## Sprint 2 - Recomendaciones, stock y cierre
+## Sprint 2 - Recomendaciones-Dashboard, stock y cierre
 
 **Objetivo del Sprint 2:**  
 Completar las funcionalidades de recomendaciones, validación de stock, resumen de pedido, registro de interacciones, pruebas finales y documentación de la demo.
@@ -29,7 +29,7 @@ Completar las funcionalidades de recomendaciones, validación de stock, resumen 
 |---|---|---|---|---|---|
 | T-S2-01 | Implementar recomendaciones para clientes nuevos | PB-03 | IA / Datos | Alta | Pendiente |
 | T-S2-02 | Implementar recomendaciones basadas en historial simulado | PB-05 | IA / Datos | Alta | Pendiente |
-| T-S2-03 | Preparar historial de compras simulado en Excel | PB-05 / PB-08 | Datos | Alta | Pendiente |
+| T-S2-03 | Preparar historial de compras simulado en Supabase | PB-05 / PB-08 | Datos | Alta | Pendiente |
 | T-S2-04 | Implementar validación básica de stock | PB-06 | Lógica / Datos | Media | Pendiente |
 | T-S2-05 | Preparar archivo de stock en Excel | PB-06 / PB-08 | Datos | Media | Pendiente |
 | T-S2-06 | Implementar resumen final del pedido | PB-07 | Frontend / Lógica | Media | Pendiente |
@@ -38,7 +38,7 @@ Completar las funcionalidades de recomendaciones, validación de stock, resumen 
 | T-S2-09 | Documentar evidencias finales del proyecto | Evidencias | Equipo | Media | Pendiente |
 | T-S2-10 | Preparar demostración final del sistema | Demo | Equipo | Alta | Pendiente |
 
-## Estados sugeridos
+## Estados
 
 | Estado | Significado |
 |---|---|
@@ -53,4 +53,4 @@ Completar las funcionalidades de recomendaciones, validación de stock, resumen 
 | Sprint | Enfoque principal | Resultado esperado |
 |---|---|---|
 | Sprint 1 | Chatbot funcional básico | Interfaz, promociones, búsqueda y carrito |
-| Sprint 2 | Funcionalidades complementarias | Recomendaciones, stock, resumen, pruebas y demo final |
+| Sprint 2 | Funcionalidades complementarias, Dashboard de gestión | Recomendaciones, stock, resumen, pruebas y demo final |
