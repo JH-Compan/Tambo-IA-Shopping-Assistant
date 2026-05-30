@@ -51,6 +51,7 @@ def crear_orden():
             "conversation_id": conversation_id,
             "total_amount":    total,
             "status":          "completed",
+            "order_date":      datetime.now().isoformat(),
             "created_at":      datetime.now().isoformat()
         }).execute()
 
