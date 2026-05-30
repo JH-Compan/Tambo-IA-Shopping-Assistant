@@ -2,7 +2,7 @@
 user_controller.py
 GET  /api/usuarios           → lista todos los usuarios
 POST /api/usuarios/registro  → registra un nuevo usuario
-POST /api/usuarios/login     → valida credenciales
+POST /api/usuarios/login     → valida las credenciales
 """
 from flask import Blueprint, jsonify, request
 from config.supabase_client import supabase
