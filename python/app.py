@@ -6,6 +6,8 @@ from flask_cors import CORS
 from controllers.producto_controller import producto_bp
 from controllers.chat_controller import chat_bp
 from controllers.admin_controller import admin_bp
+from controllers.user_controller  import user_bp
+from controllers.orden_controller import orden_bp
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,6 +21,8 @@ def crear_app():
     app.register_blueprint(producto_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(orden_bp)
 
     @app.route("/", methods=["GET"])
     def home():
