@@ -471,8 +471,8 @@ function showPromotions(items){
 
 function promotionCard(promo){
     const id = productId(promo);
-    const name = promo.name || promo.nombre || promo.title || promo.titulo || `Promoción ${id}`;
-    const price = promo.price || promo.precio || promo.discount_price || promo.final_price || 0;
+    const name = promo.title || promo.name || promo.nombre || `Promoción ${id}`;
+    const price = promo.promo_price || promo.price || promo.precio || promo.discount_price || 0;
     const description = promo.description || promo.descripcion || promo.detail || promo.detalle || "Promoción activa";
 
     return `
