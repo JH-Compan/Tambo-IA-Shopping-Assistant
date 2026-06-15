@@ -31,7 +31,6 @@ Completar las funcionalidades de recomendaciones, validación de stock, resumen 
 | T-S2-02 | Implementar recomendaciones basadas en historial simulado | PB-05 | IA / Datos | Alta | Pendiente |
 | T-S2-03 | Preparar historial de compras simulado en Supabase | PB-05 / PB-08 | Datos | Alta | Pendiente |
 | T-S2-04 | Implementar validación básica de stock | PB-06 | Lógica / Datos | Media | Pendiente |
-| T-S2-05 | Preparar archivo de stock en Excel | PB-06 / PB-08 | Datos | Media | Pendiente |
 | T-S2-06 | Implementar resumen final del pedido | PB-07 | Frontend / Lógica | Media | Pendiente |
 | T-S2-07 | Registrar interacciones básicas del chatbot | PB-08 | Datos / Lógica | Media | Pendiente |
 | T-S2-08 | Realizar pruebas de recomendaciones, stock, resumen y administración | PB-03 / PB-05 / PB-06 / PB-07 / PB-08 | Pruebas | Alta | Pendiente |
