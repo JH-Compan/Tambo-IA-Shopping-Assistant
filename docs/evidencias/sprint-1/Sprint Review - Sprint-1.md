@@ -103,6 +103,31 @@ Mejorar la estructura de consultas a la base de datos.
 3. Mantener actualizada la documentación del proyecto.  
 4. Fortalecer las pruebas funcionales antes del cierre del sprint.
 
+# Métricas del Sprint
+
+| Métrica | Valor |
+|---------|-------|
+| Historias comprometidas | 3 |
+| Historias completadas | 2 |
+| Story Points comprometidos | 18 SP |
+| Story Points completados | 13 SP |
+| Velocity | 13 SP |
+
+## Burndown Chart — Sprint 1
+
+| Día | SP Restantes (ideal) | SP Restantes (real) |
+|-----|---------------------|---------------------|
+| Día 1 | 18 | 18 |
+| Día 2 | 15 | 17 |
+| Día 3 | 12 | 14 |
+| Día 4 | 9 | 12 |
+| Día 5 | 6 | 10 |
+| Día 6 | 3 | 8 |
+| Día 7 | 0 | 5 |
+| Fin Sprint | 0 | 5 |
+
+*El carrito (5 SP) quedó incompleto, por eso los SP reales al final son 5.*
+
 # **Trabajo Pendiente para el Próximo Sprint**
 
 1. Completar la implementación del módulo de recomendaciones personalizadas basadas en historial de compras.  
