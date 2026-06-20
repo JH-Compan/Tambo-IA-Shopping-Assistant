@@ -26,7 +26,7 @@ Mejorar y ampliar las funcionalidades del chatbot Tambot, incorporando recomenda
 - **Evidencias:**  
   * Registro de historial de usuario en Supabase.
 
-  \[Insertar Imagen: Evidencia11.jpeg\]  
+  ![Segmentación de clientes e historial de consumo](Evidencia11.jpeg) 
     *Análisis de perfiles y mejores clientes para el motor de recomendaciones.*
 
   * Generación de recomendaciones en el chatbot.  
@@ -49,7 +49,7 @@ Mejorar y ampliar las funcionalidades del chatbot Tambot, incorporando recomenda
   * Registro de conversaciones en base de datos.  
   * Visualización de historial de interacción.
 
-  \[Insertar Imagen: Evidencia13.jpeg\]  
+  ![Volumen de interacciones e intenciones de búsqueda](Evidencia13.jpeg) 
     *Métricas de analítica conversacional, intenciones detectadas y horas pico.*
 
 - **Estado:** Completado
@@ -62,9 +62,9 @@ Mejorar y ampliar las funcionalidades del chatbot Tambot, incorporando recomenda
   * Visualización de productos y stock.  
   * Sección de métricas y actividad de usuarios.
 
-  \[Insertar Imagen: Evidencia9.jpeg\]  
+  ![Resumen General del Dashboard](Evidencia9.jpeg)  
     *Vista del panel general conectado a la base de datos de Supabase.*  
-    \[Insertar Imagen: Evidencia10.jpeg\]  
+    ![Analítica de Ventas y Categorías](Evidencia10.jpeg)  
     *Reporte operativo de ingresos, productos más vendidos y categorías con mayor rotación.*
 
 - **Estado:** En desarrollo / En revisión
@@ -91,7 +91,7 @@ Se identificó la necesidad de:
 - Mejorar la seguridad en el acceso a datos del backend.  
 - Integrar completamente el dashboard con todos los módulos del sistema.
 
-\[Insertar Imagen: Evidencia12.jpeg\]
+![Métricas de Inteligencia del Asistente](Evidencia12.jpeg)
 
 *Estado actual del embudo de conversión y tasa de aceptación del asistente.*
 
