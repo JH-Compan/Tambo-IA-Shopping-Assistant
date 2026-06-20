@@ -71,11 +71,15 @@ class NLPService:
 
     def normalize_text(self, text: str) -> str:
         collapsed = " ".join(text.strip().lower().split())
+        collapsed = collapsed.replace("’", "'").replace("`", "'")
+        collapsed = collapsed.replace("-", " ")
         without_accents = "".join(
             char for char in unicodedata.normalize("NFD", collapsed)
             if unicodedata.category(char) != "Mn"
         )
-        cleaned = re.sub(r"[^a-z0-9\s]", " ", without_accents)
+        cleaned = re.sub(r"[^a-z0-9\s/%.,']", " ", without_accents)
+        cleaned = cleaned.replace("'", "")
+        cleaned = re.sub(r"(\d)\s+(ml|l)\b", r"\1\2", cleaned)
         return " ".join(cleaned.split())
 
     def extract_entities(

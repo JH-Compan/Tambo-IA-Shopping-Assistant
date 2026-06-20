@@ -61,6 +61,42 @@ class RecomendacionRepository:
             "error": "No se pudo guardar feedback."
         }
 
+    def marcar_recomendacion_seleccionada(self, recommendation_id):
+        if not recommendation_id:
+            return {
+                "success": True,
+                "attempted": 0,
+                "saved": 0,
+                "data": [],
+                "error": None
+            }
+        return self._update_records(
+            table_name="ai_recommendations",
+            filters={"id": recommendation_id},
+            payload={"was_selected": True}
+        )
+
+    def guardar_interaccion(self, user_id, conversation_id, item_id, item_type, interaction_type, weight=1):
+        record = {
+            "id": generar_id("INT"),
+            "user_id": user_id,
+            "conversation_id": conversation_id,
+            "interaction_type": interaction_type,
+            "product_id": item_id if item_type == "product" else None,
+            "promotion_id": item_id if item_type == "promotion" else None,
+            "weight": weight,
+            "created_at": datetime.now().isoformat(timespec="seconds")
+        }
+        if not self._is_valid_reference(record):
+            return {
+                "success": False,
+                "attempted": 1,
+                "saved": 0,
+                "data": [],
+                "error": "Referencia invalida para interaccion."
+            }
+        return self._insert_batch("ai_user_interactions", [record])
+
     def _build_recommendation_payloads(self, conversation_id, items, item_type, reason):
         payload = []
         timestamp = datetime.now().isoformat(timespec="seconds")
@@ -146,6 +182,29 @@ class RecomendacionRepository:
             return {
                 "success": False,
                 "attempted": attempted,
+                "saved": 0,
+                "data": [],
+                "error": self._sanitize_error(error)
+            }
+
+    def _update_records(self, table_name, filters, payload):
+        try:
+            query = supabase.table(table_name).update(payload)
+            for key, value in (filters or {}).items():
+                query = query.eq(key, value)
+            response = query.execute()
+            data = response.data or []
+            return {
+                "success": len(data) >= 1,
+                "attempted": 1,
+                "saved": len(data),
+                "data": data,
+                "error": None if data else f"No se pudo actualizar en {table_name}."
+            }
+        except Exception as error:
+            return {
+                "success": False,
+                "attempted": 1,
                 "saved": 0,
                 "data": [],
                 "error": self._sanitize_error(error)

@@ -418,7 +418,7 @@ html, body {
 /* =========================================================
    CONFIGURACIÓN
 ========================================================= */
-const API_BASE = "http://localhost:5000";
+const API_BASE = "";
 
 const USER_ID      = sessionStorage.getItem("tambo_user_id");
 const USER_NAME    = sessionStorage.getItem("tambo_user_name");
@@ -949,6 +949,154 @@ function escapeHtml(value) {
 function escapeJs(value) {
     return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
+
+const baseAddItemToCart = addItemToCart;
+const baseAddProductToCartById = addProductToCartById;
+const baseAddPromotionToCartById = addPromotionToCartById;
+
+addItemToCart = function(item, options = {}) {
+    if (item.type === "producto") {
+        const availableStock = Number(item.stock) || 0;
+        const existingQty = cart.find(c => c.id === item.id && c.type === item.type)?.qty || 0;
+
+        if (availableStock <= 0) {
+            if (!options.silent) {
+                botMessage(`No hay stock disponible para <strong>${escapeHtml(item.name)}</strong>.`, ["Ver productos"]);
+            }
+            return false;
+        }
+
+        if (existingQty >= availableStock) {
+            if (!options.silent) {
+                botMessage(`No hay suficiente stock para agregar mas unidades de <strong>${escapeHtml(item.name)}</strong>.`, ["Ver carrito", "Ver productos"]);
+            }
+            return false;
+        }
+    }
+
+    const previousLength = cart.length;
+    const previousQty = cart.find(c => c.id === item.id && c.type === item.type)?.qty || 0;
+    baseAddItemToCart(item);
+
+    const currentQty = cart.find(c => c.id === item.id && c.type === item.type)?.qty || 0;
+    const changed = cart.length !== previousLength || currentQty !== previousQty;
+    if (options.silent && changed) {
+        const box = document.getElementById("chat-box");
+        const lastBubble = box.lastElementChild;
+        if (lastBubble && lastBubble.classList.contains("bubble-wrap")) {
+            const bubble = lastBubble.querySelector(".bubble.bot");
+            if (bubble && bubble.innerHTML.includes("agregado al carrito")) {
+                lastBubble.remove();
+            }
+        }
+    }
+    return changed;
+};
+
+addProductToCartById = async function(rawId, options = {}) {
+    const originalBotMessage = botMessage;
+    if (options.silent) {
+        botMessage = () => {};
+    }
+    try {
+        const beforeQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "producto")?.qty || 0;
+        await baseAddProductToCartById(rawId);
+        const afterQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "producto")?.qty || 0;
+        return afterQty > beforeQty;
+    } finally {
+        botMessage = originalBotMessage;
+    }
+};
+
+addPromotionToCartById = async function(rawId, options = {}) {
+    const originalBotMessage = botMessage;
+    if (options.silent) {
+        botMessage = () => {};
+    }
+    try {
+        const beforeQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "promocion")?.qty || 0;
+        await baseAddPromotionToCartById(rawId);
+        const afterQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "promocion")?.qty || 0;
+        return afterQty > beforeQty;
+    } finally {
+        botMessage = originalBotMessage;
+    }
+};
+
+const baseShowBackendRecommendation = showBackendRecommendation;
+showBackendRecommendation = async function(message) {
+    const data = await askBackend(message);
+    const respuesta = data.respuesta || "El backend respondió correctamente.";
+    const items = normalizeArray(data.items);
+    const tipo = data.tipo || "texto";
+    const clientAction = data.client_action || null;
+
+    if (tipo === "promociones") { registerPromotions(items); }
+    else { registerProducts(items); }
+
+    let html = `<strong>Tambot ++</strong><br><span style="color:var(--text2)">${escapeHtml(respuesta)}</span><br><br>`;
+    if (items.length) {
+        items.slice(0, 5).forEach(item => {
+            html += tipo === "promociones" ? promotionCard(item) : productCard(item);
+        });
+    }
+    botMessage(html, ["Ver productos", "Ver promociones", "Mi carrito"]);
+
+    if (clientAction && clientAction.type === "add_to_cart") {
+        const added = await applyClientAction(clientAction);
+        if (added) {
+            botMessage("Ya lo agregué al carrito.", ["Ver carrito", "Finalizar compra", "Ver productos"]);
+        } else {
+            botMessage("No pude agregar esa opción al carrito. Tu selección sigue disponible para reintentar.", ["Ver carrito", "Ver productos"]);
+        }
+    }
+};
+
+async function applyClientAction(action) {
+    if (!action || action.type !== "add_to_cart") return false;
+    const quantity = Math.max(1, Number(action.quantity) || 1);
+    for (let index = 0; index < quantity; index += 1) {
+        const ok = action.item_type === "promotion"
+            ? await addPromotionToCartById(action.item_id, { silent: true })
+            : await addProductToCartById(action.item_id, { silent: true });
+        if (!ok) {
+            return false;
+        }
+    }
+    return true;
+}
+
+const originalApiGet = apiGet;
+apiGet = async function(path) {
+    try {
+        return await originalApiGet(path);
+    } catch (error) {
+        console.error("GET request failed", { path, error });
+        throw new Error("No pudimos conectarnos con el servidor. Inténtalo nuevamente.");
+    }
+};
+
+const originalApiPost = apiPost;
+apiPost = async function(path, payload) {
+    try {
+        return await originalApiPost(path, payload);
+    } catch (error) {
+        console.error("POST request failed", { path, error });
+        throw new Error("No pudimos conectarnos con el servidor. Inténtalo nuevamente.");
+    }
+};
+
+const originalProcessMessage = processMessage;
+processMessage = async function() {
+    try {
+        await originalProcessMessage();
+    } catch (error) {
+        console.error("processMessage failed", error);
+        setStatus("error", false);
+        showTyping(false);
+        botMessage("No pudimos conectarnos con el servidor. Inténtalo nuevamente.", ["Reintentar conexión"]);
+    }
+};
 </script>
 </body>
 </html>

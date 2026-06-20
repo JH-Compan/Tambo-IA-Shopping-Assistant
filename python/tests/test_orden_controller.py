@@ -1,12 +1,20 @@
 import os
+import sys
+import types
 import unittest
 from unittest.mock import MagicMock, patch
 
 
 os.environ.setdefault("SUPABASE_URL", "http://localhost")
-os.environ.setdefault("SUPABASE_SECRET_KEY", "test-secret")
+os.environ.setdefault("SUPABASE_SECRET_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0In0.signature")
 
-with patch("supabase.create_client", return_value=MagicMock()):
+fake_supabase = types.ModuleType("supabase")
+fake_supabase.Client = object
+fake_supabase.create_client = MagicMock(return_value=MagicMock())
+fake_config_supabase_client = types.ModuleType("config.supabase_client")
+fake_config_supabase_client.supabase = MagicMock()
+
+with patch.dict(sys.modules, {"supabase": fake_supabase, "config.supabase_client": fake_config_supabase_client}):
     from app import crear_app
     from controllers.orden_controller import supabase
 

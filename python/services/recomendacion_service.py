@@ -9,124 +9,85 @@ class RecomendacionService:
         self.recomendacion_repository = RecomendacionRepository()
 
     def recomendar_productos(self, mensaje, conversation_id=None, analysis=None):
-        texto = mensaje.lower()
+        texto = str(mensaje or "").lower()
         analysis = analysis or {}
-        intent = analysis.get("intent", "consulta_general")
-        entities = analysis.get("entities", {})
+        intent = self._read_intent(analysis)
+        entities = analysis.get("entities", {}) if isinstance(analysis.get("entities"), dict) else {}
+        exclusions = analysis.get("exclusions", {}) if isinstance(analysis.get("exclusions"), dict) else {}
+        preferences = analysis.get("preferences", []) if isinstance(analysis.get("preferences"), list) else []
+        metadata = analysis.get("metadata", {}) if isinstance(analysis.get("metadata"), dict) else {}
+        excluded_item_ids = set(metadata.get("excluded_item_ids", []) or [])
+
+        product_id = entities.get("product_id")
         product_name = entities.get("product_name")
-        category_name = entities.get("category")
-        preference = entities.get("preference")
-        budget_max = entities.get("budget_max")
+        brand = entities.get("brand")
+        category_id = entities.get("category_id")
+        category_name = entities.get("category_name") or entities.get("category")
+        promotion_id = entities.get("promotion_id")
+        promotion_type = entities.get("promotion_type")
         budget_min = entities.get("budget_min")
+        budget_max = entities.get("budget_max")
+        category_candidates = metadata.get("category_candidates", [])
 
         if intent == "consultar_promocion":
+            promociones = self._filtrar_promociones(
+                promociones=self.producto_repository.listar_promociones_activas(limite=None),
+                promotion_id=promotion_id,
+                promotion_type=promotion_type,
+                brand=brand,
+                product_name=product_name
+            )
             return {
                 "tipo": "promociones",
-                "items": self.producto_repository.listar_promociones_activas(limite=5),
-                "razon": "El usuario solicitó promociones u ofertas."
+                "items": promociones[:5],
+                "razon": "El usuario solicito promociones u ofertas."
             }
 
-        if intent == "consultar_precio":
-            return {
-                "tipo": "productos",
-                "items": self._resolver_productos(product_name, category_name),
-                "razon": "El usuario consultó precios de productos."
-            }
-
-        if intent == "consultar_stock":
-            return {
-                "tipo": "productos",
-                "items": self._resolver_productos(product_name, category_name),
-                "razon": "El usuario consultó disponibilidad de productos."
-            }
-
-        if intent == "pedir_recomendacion" and preference == "economico":
-            productos = self.producto_repository.listar_productos_ordenados_por_precio(limite=10)
-            return self._filtrar_por_presupuesto(
-                productos=productos,
+        if intent in {"consultar_precio", "consultar_stock", "confirmar_interes", "buscar_producto", "pedir_recomendacion"}:
+            productos = self._resolver_productos(
+                product_id=product_id,
+                product_name=product_name,
+                brand=brand,
+                category_id=category_id,
+                category_name=category_name,
+                category_candidates=category_candidates,
                 budget_min=budget_min,
                 budget_max=budget_max,
-                razon="El usuario mostró interés por productos económicos."
+                preferences=preferences,
+                exclusions=exclusions,
+                excluded_item_ids=excluded_item_ids
             )
 
-        if intent == "confirmar_interes" and product_name:
-            productos = self.producto_repository.buscar_productos_por_nombre(product_name, limite=5)
-            return {
-                "tipo": "productos",
-                "items": productos,
-                "razon": "El usuario confirmó interés en un producto."
-            }
+            if intent == "pedir_recomendacion" and any(word in texto for word in ["barato", "economico", "económico"]) and "economic" not in preferences:
+                preferences = preferences + ["economic"]
 
-        if category_name:
-            categorias = self.producto_repository.listar_categorias()
-            for categoria in categorias:
-                if categoria["name"].lower() == str(category_name).lower():
-                    productos = self.producto_repository.buscar_productos_por_categoria_id(
-                        categoria["id"],
-                        limite=10
-                    )
-                    if budget_min is not None or budget_max is not None:
-                        return self._filtrar_por_presupuesto(
-                            productos=productos,
-                            budget_min=budget_min,
-                            budget_max=budget_max,
-                            razon=f"El usuario mencionó la categoría {categoria['name']}."
-                        )
-                    return {
-                        "tipo": "productos",
-                        "items": productos[:5],
-                        "razon": f"El usuario mencionó la categoría {categoria['name']}."
-                    }
+            if intent == "pedir_recomendacion" and "economic" in preferences:
+                productos = sorted(productos, key=lambda item: item.get("price") or 0)
 
-        if product_name:
-            productos = self.producto_repository.buscar_productos_por_nombre(product_name, limite=5)
             if productos:
                 return {
                     "tipo": "productos",
-                    "items": productos,
-                    "razon": f"El usuario mencionó el producto {product_name}."
+                    "items": productos[:5],
+                    "razon": "Se encontraron productos relacionados con la intención detectada."
                 }
 
-        if any(p in texto for p in ["barato", "económico", "economico", "menor precio"]):
-            productos = self.producto_repository.listar_productos_ordenados_por_precio(limite=10)
-            return self._filtrar_por_presupuesto(
-                productos=productos,
-                budget_min=budget_min,
-                budget_max=budget_max,
-                razon="El usuario mostró interés por productos económicos."
-            )
-
-        palabras_clave = {
-            "bebida": ["bebida", "tomar", "gaseosa", "agua", "jugo"],
-            "dulce": ["dulce", "chocolate", "galleta", "gomita", "caramelo"],
-            "snack": ["snack", "papas", "piqueo", "salado"],
-            "limpieza": ["limpieza", "jabón", "detergente", "papel"]
-        }
-
-        for _, palabras in palabras_clave.items():
-            if any(palabra in texto for palabra in palabras):
-                for palabra in palabras:
-                    productos = self.producto_repository.buscar_productos_por_nombre(palabra, limite=5)
-                    if productos:
-                        return {
-                            "tipo": "productos",
-                            "items": productos,
-                            "razon": f"El usuario mencionó una necesidad relacionada con {palabra}."
-                        }
-
-        productos = self.producto_repository.listar_productos(limite=10)
-        if budget_min is not None or budget_max is not None:
-            return self._filtrar_por_presupuesto(
-                productos=productos,
-                budget_min=budget_min,
-                budget_max=budget_max,
-                razon="No se detectó una categoría específica; se aplicó el filtro de presupuesto."
-            )
-
+        productos = self._resolver_productos(
+            product_id=None,
+            product_name=None,
+            brand=None,
+            category_id=category_id,
+            category_name=category_name,
+            category_candidates=category_candidates,
+            budget_min=budget_min,
+            budget_max=budget_max,
+            preferences=preferences,
+            exclusions=exclusions,
+            excluded_item_ids=excluded_item_ids
+        )
         return {
             "tipo": "productos",
             "items": productos[:5],
-            "razon": "No se detectó una categoría específica; se muestran productos generales."
+            "razon": "No se detecto una categoria especifica; se muestran productos generales."
         }
 
     def guardar_recomendaciones_generadas(self, conversation_id, productos, razon):
@@ -161,43 +122,145 @@ class RecomendacionService:
             item_type="promotion"
         )
 
-    def _resolver_productos(self, product_name, category_name):
-        if product_name:
-            productos = self.producto_repository.buscar_productos_por_nombre(product_name, limite=5)
-            if productos:
-                return productos
+    def marcar_recomendacion_seleccionada(self, recommendation_id):
+        return self.recomendacion_repository.marcar_recomendacion_seleccionada(recommendation_id)
 
-        if category_name:
-            for categoria in self.producto_repository.listar_categorias():
-                if categoria["name"].lower() == str(category_name).lower():
-                    return self.producto_repository.buscar_productos_por_categoria_id(
-                        categoria["id"],
-                        limite=5
-                    )
+    def registrar_interaccion_item(self, user_id, conversation_id, item_id, item_type, interaction_type, weight=1):
+        return self.recomendacion_repository.guardar_interaccion(
+            user_id=user_id,
+            conversation_id=conversation_id,
+            item_id=item_id,
+            item_type=item_type,
+            interaction_type=interaction_type,
+            weight=weight
+        )
 
-        return self.producto_repository.listar_productos(limite=5)
-
-    def _filtrar_por_presupuesto(self, productos, budget_min, budget_max, razon):
+    def _resolver_productos(
+        self,
+        product_id,
+        product_name,
+        brand,
+        category_id,
+        category_name,
+        category_candidates,
+        budget_min,
+        budget_max,
+        preferences,
+        exclusions,
+        excluded_item_ids
+    ):
+        productos = self.producto_repository.listar_productos(limite=None) or []
         filtrados = []
         for producto in productos:
-            price = producto.get("price")
-            if price is None:
+            if not producto.get("is_active", True):
                 continue
-            if budget_min is not None and price < budget_min:
+            if (producto.get("stock") or 0) <= 0:
                 continue
-            if budget_max is not None and price > budget_max:
+            if product_id and producto.get("id") != product_id:
+                continue
+            if product_name and product_name.lower() not in str(producto.get("name", "")).lower():
+                continue
+            if brand and brand.lower() != str(producto.get("brand", "")).lower():
+                continue
+            if category_id and producto.get("category_id") != category_id:
+                continue
+            if self._is_excluded(producto, exclusions):
+                continue
+            if producto.get("id") in excluded_item_ids:
+                continue
+            if category_candidates and not category_id and not category_name:
+                if not self._matches_category_candidates(producto, category_candidates):
+                    continue
+            if not self._matches_preferences(producto, preferences):
+                continue
+            if not self._matches_budget(producto, budget_min, budget_max):
                 continue
             filtrados.append(producto)
 
         if filtrados:
-            return {
-                "tipo": "productos",
-                "items": filtrados[:5],
-                "razon": razon
-            }
+            return filtrados
 
-        return {
-            "tipo": "productos",
-            "items": productos[:5],
-            "razon": razon
+        if category_name and not category_id:
+            categorias = self.producto_repository.listar_categorias() or []
+            for categoria in categorias:
+                if str(categoria.get("name", "")).lower() == str(category_name).lower():
+                    return self._resolver_productos(
+                        product_id,
+                        product_name,
+                        brand,
+                        categoria.get("id"),
+                        category_name,
+                        category_candidates,
+                        budget_min,
+                        budget_max,
+                        preferences,
+                        exclusions,
+                        excluded_item_ids
+                    )
+
+        return []
+
+    def _filtrar_promociones(self, promociones, promotion_id, promotion_type, brand, product_name):
+        promociones = promociones or []
+        if not any([promotion_id, promotion_type, brand, product_name]):
+            return promociones
+
+        filtradas = []
+        for promocion in promociones:
+            if promotion_id and promocion.get("id") != promotion_id:
+                continue
+            if promotion_type and promocion.get("promotion_type") != promotion_type:
+                continue
+            haystack = f"{promocion.get('title', '')} {promocion.get('description', '')}".lower()
+            if brand and brand.lower() not in haystack:
+                continue
+            if product_name and product_name.lower() not in haystack:
+                continue
+            filtradas.append(promocion)
+        return filtradas
+
+    def _is_excluded(self, producto, exclusions):
+        return (
+            producto.get("id") in set(exclusions.get("product_ids", []))
+            or producto.get("category_id") in set(exclusions.get("category_ids", []))
+            or producto.get("name") in set(exclusions.get("products", []))
+            or producto.get("brand") in set(exclusions.get("brands", []))
+            or str(producto.get("category_name") or "") in set(exclusions.get("categories", []))
+        )
+
+    def _matches_category_candidates(self, producto, category_candidates):
+        category_candidates = {str(candidate).lower() for candidate in category_candidates}
+        category_map = {
+            str(category.get("id")): str(category.get("name", "")).lower()
+            for category in (self.producto_repository.listar_categorias() or [])
         }
+        category_name = category_map.get(str(producto.get("category_id")), "")
+        return category_name in category_candidates
+
+    def _matches_preferences(self, producto, preferences):
+        description = str(producto.get("description", "")).lower()
+        if "without_gas" in preferences and "con gas" in description:
+            return False
+        if "with_gas" in preferences and "sin gas" in description:
+            return False
+        if "sweet" in preferences and "dulce" not in description and "galleta" not in description:
+            return False
+        if "salty" in preferences and "salado" not in description:
+            return False
+        return True
+
+    def _matches_budget(self, producto, budget_min, budget_max):
+        price = producto.get("price")
+        if price is None:
+            return False
+        if budget_min is not None and price < budget_min:
+            return False
+        if budget_max is not None and price > budget_max:
+            return False
+        return True
+
+    def _read_intent(self, analysis):
+        intent = analysis.get("intent", "consulta_general")
+        if isinstance(intent, dict):
+            return intent.get("value", "consulta_general")
+        return intent
