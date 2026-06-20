@@ -8,9 +8,11 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request
 
 from config.supabase_client import supabase
+from services.availability_service import AvailabilityService
 
 
 orden_bp = Blueprint("orden_bp", __name__)
+availability_service = AvailabilityService()
 
 VALID_ITEM_TYPES = {
     "product": "product",
@@ -121,6 +123,45 @@ def crear_orden():
     except Exception as exc:
         message, status_code = _parse_rpc_error(exc)
         return _build_error_response(message, status_code)
+
+
+@orden_bp.route("/api/carrito/validar-item", methods=["POST"])
+def validar_item_carrito():
+    data = request.get_json(silent=True)
+    if not data:
+        return _build_error_response("Se esperaba un cuerpo JSON valido", 400)
+
+    user_id = data.get("user_id")
+    item_id = str(data.get("item_id") or "").strip()
+    item_type = _normalize_item_type(data.get("item_type"))
+    quantity = data.get("quantity", 1)
+
+    if not item_id:
+        return _build_error_response("El campo 'item_id' es obligatorio", 400)
+    if not item_type:
+        return _build_error_response("El campo 'item_type' es invalido", 400)
+    if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity < 1:
+        return _build_error_response("El campo 'quantity' debe ser un entero mayor o igual a 1", 400)
+
+    availability = availability_service.evaluate_item(
+        item_type=item_type,
+        item_id=item_id,
+        requested_quantity=quantity,
+        user_id=user_id
+    )
+    response = {
+        "success": True,
+        "available": availability["available"],
+        "item_id": item_id,
+        "quantity": quantity,
+    }
+    if availability["available"]:
+        return jsonify(response), 200
+
+    response["reason_code"] = availability.get("reason_code")
+    response["message"] = availability.get("reason")
+    response["details"] = availability.get("details")
+    return jsonify(response), 200
 
 
 @orden_bp.route("/api/chat/cerrar", methods=["POST"])

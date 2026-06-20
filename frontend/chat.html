@@ -488,7 +488,7 @@ async function loadCatalog() {
     const [productosData, categoriasData, promocionesData] = await Promise.all([
         apiGet("/api/productos"),
         apiGet("/api/categorias"),
-        apiGet("/api/promociones")
+        apiGet(`/api/promociones?user_id=${encodeURIComponent(USER_ID)}`)
     ]);
     products   = normalizeArray(productosData);
     categories = normalizeArray(categoriasData);
@@ -516,6 +516,15 @@ async function askBackend(message) {
         sessionStorage.setItem("tambo_conversation_id", conversationId);
     }
     return data;
+}
+
+async function validateCartItem(itemType, itemId, quantity) {
+    return await apiPost("/api/carrito/validar-item", {
+        user_id: USER_ID,
+        item_type: itemType,
+        item_id: itemId,
+        quantity: Math.max(1, Number(quantity) || 1)
+    });
 }
 
 /* =========================================================
@@ -691,7 +700,7 @@ async function showBackendRecommendation(message) {
 /* =========================================================
    CARRITO
 ========================================================= */
-async function addProductToCartById(rawId) {
+async function addProductToCartById(rawId, options = {}) {
     const id = normalizeItemId(rawId);
     let product =
         productRegistry.get(id) ||
@@ -713,16 +722,25 @@ async function addProductToCartById(rawId) {
         return;
     }
 
-    addItemToCart({
+    const existingQty = cart.find(c => c.id === id && c.type === "producto")?.qty || 0;
+    const requestedQuantity = existingQty + Math.max(1, Number(options.quantity) || 1);
+    const validation = await validateCartItem("product", id, requestedQuantity);
+    if (!validation.available) {
+        await handleUnavailableCartItem(validation, "producto", id);
+        return false;
+    }
+
+    return addItemToCart({
         id: normalizeItemId(productId(product)),
         name: productName(product),
         price: Number(productPrice(product)) || 0,
         type: "producto",
-        stock: Number(productStock(product)) || 0
-    });
+        stock: Number(productStock(product)) || 0,
+        quantity: Math.max(1, Number(options.quantity) || 1)
+    }, options);
 }
 
-async function addPromotionToCartById(rawId) {
+async function addPromotionToCartById(rawId, options = {}) {
     const id = normalizeItemId(rawId);
     let promo =
         promotionRegistry.get(id) ||
@@ -741,18 +759,28 @@ async function addPromotionToCartById(rawId) {
             registryIds: [...promotionRegistry.keys()]
         });
         botMessage("No pude actualizar esa promocion. Recarga el catalogo e intentalo nuevamente.", ["Ver promociones"]);
-        return;
+        return false;
     }
 
-    addItemToCart({
+    const existingQty = cart.find(c => c.id === id && c.type === "promocion")?.qty || 0;
+    const requestedQuantity = existingQty + Math.max(1, Number(options.quantity) || 1);
+    const validation = await validateCartItem("promotion", id, requestedQuantity);
+    if (!validation.available) {
+        await handleUnavailableCartItem(validation, "promocion", id);
+        return false;
+    }
+
+    return addItemToCart({
         id: normalizeItemId(productId(promo)),
         name: promo.title ?? promo.name ?? promo.nombre ?? `Promocion ${normalizeItemId(productId(promo))}`,
         price: Number(promo.promo_price ?? promo.price ?? promo.precio ?? 0),
-        type: "promocion"
-    });
+        type: "promocion",
+        quantity: Math.max(1, Number(options.quantity) || 1)
+    }, options);
 }
 
 function addItemToCart(item) {
+    const quantityToAdd = Math.max(1, Number(item.quantity) || 1);
     if (item.type === "producto") {
         const availableStock = Number(item.stock) || 0;
         const existingQty = cart.find(c => c.id === item.id && c.type === item.type)?.qty || 0;
@@ -762,16 +790,34 @@ function addItemToCart(item) {
             return;
         }
 
-        if (existingQty >= availableStock) {
+        if (existingQty + quantityToAdd > availableStock) {
             botMessage(`No hay suficiente stock para agregar mas unidades de <strong>${escapeHtml(item.name)}</strong>.`, ["Ver carrito", "Ver productos"]);
             return;
         }
     }
 
     const existing = cart.find(c => c.id === item.id && c.type === item.type);
-    if (existing) { existing.qty += 1; }
-    else          { cart.push({ ...item, qty: 1 }); }
+    if (existing) { existing.qty += quantityToAdd; }
+    else          { cart.push({ ...item, qty: quantityToAdd }); }
     botMessage(`<span style="color:var(--green)">+</span> <strong>${escapeHtml(item.name)}</strong> agregado al carrito`, ["Ver carrito", "Finalizar compra", "Ver productos"]);
+}
+
+async function handleUnavailableCartItem(validation, itemType, itemId) {
+    const message = validation?.message || "Esta opcion ya no esta disponible.";
+    removeUnavailableOptionFromRegistries(itemType, itemId);
+    await loadCatalog();
+    botMessage(escapeHtml(message), ["Ver productos", "Ver promociones", "Mi carrito"]);
+}
+
+function removeUnavailableOptionFromRegistries(itemType, itemId) {
+    const normalizedId = normalizeItemId(itemId);
+    if (itemType === "promocion") {
+        promotionRegistry.delete(normalizedId);
+        promotions = promotions.filter(item => normalizeItemId(productId(item)) !== normalizedId);
+        return;
+    }
+    productRegistry.delete(normalizedId);
+    products = products.filter(item => normalizeItemId(productId(item)) !== normalizedId);
 }
 
 function showCart() {
@@ -1000,7 +1046,7 @@ addProductToCartById = async function(rawId, options = {}) {
     }
     try {
         const beforeQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "producto")?.qty || 0;
-        await baseAddProductToCartById(rawId);
+        await baseAddProductToCartById(rawId, options);
         const afterQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "producto")?.qty || 0;
         return afterQty > beforeQty;
     } finally {
@@ -1015,7 +1061,7 @@ addPromotionToCartById = async function(rawId, options = {}) {
     }
     try {
         const beforeQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "promocion")?.qty || 0;
-        await baseAddPromotionToCartById(rawId);
+        await baseAddPromotionToCartById(rawId, options);
         const afterQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "promocion")?.qty || 0;
         return afterQty > beforeQty;
     } finally {
@@ -1055,15 +1101,9 @@ showBackendRecommendation = async function(message) {
 async function applyClientAction(action) {
     if (!action || action.type !== "add_to_cart") return false;
     const quantity = Math.max(1, Number(action.quantity) || 1);
-    for (let index = 0; index < quantity; index += 1) {
-        const ok = action.item_type === "promotion"
-            ? await addPromotionToCartById(action.item_id, { silent: true })
-            : await addProductToCartById(action.item_id, { silent: true });
-        if (!ok) {
-            return false;
-        }
-    }
-    return true;
+    return action.item_type === "promotion"
+        ? await addPromotionToCartById(action.item_id, { silent: true, quantity })
+        : await addProductToCartById(action.item_id, { silent: true, quantity });
 }
 
 const originalApiGet = apiGet;

@@ -3,6 +3,7 @@ import logging
 from models.nlp_analysis import get_intent_confidence, get_intent_value, normalize_nlp_analysis
 from repositories.conversacion_repository import ConversacionRepository
 from repositories.producto_repository import ProductoRepository
+from services.availability_service import AvailabilityService
 from services.clarification_policy import ClarificationPolicy
 from services.context_resolver import ContextResolver
 from services.nlp_service import NLPService
@@ -16,6 +17,7 @@ class ChatbotService:
         self.conversacion_repository = ConversacionRepository()
         self.producto_repository = ProductoRepository()
         self.recomendacion_service = RecomendacionService()
+        self.availability_service = AvailabilityService()
         self.nlp_service = NLPService()
         self.nlp_orchestrator = NLPOrchestrator(self.nlp_service)
         self.clarification_policy = ClarificationPolicy()
@@ -264,6 +266,16 @@ class ChatbotService:
             )
 
         if analysis["decision"].get("next_action") == "add_to_cart" and client_action:
+            unavailable_response = self._handle_unavailable_client_action(
+                user_id=user_id,
+                mensaje=mensaje,
+                analysis=analysis,
+                context_state=context_state,
+                client_action=client_action
+            )
+            if unavailable_response:
+                return unavailable_response
+
             context_state = self.context_resolver.mark_selected_item(context_state, {
                 "recommendation_id": analysis["context"].get("referenced_recommendation_id"),
                 "item_id": analysis["context"].get("referenced_promotion_id") or analysis["context"].get("referenced_product_id"),
@@ -283,6 +295,7 @@ class ChatbotService:
             )
 
         recomendacion = self.recomendacion_service.recomendar_productos(
+            user_id=user_id,
             mensaje=mensaje,
             conversation_id=conversation_id,
             analysis=analysis
@@ -503,6 +516,58 @@ class ChatbotService:
                 interaction_type="added_to_cart",
                 weight=1
             )
+
+    def _handle_unavailable_client_action(self, user_id, mensaje, analysis, context_state, client_action):
+        availability = self.availability_service.validate_item_availability(
+            item_type=client_action.get("item_type"),
+            item_id=client_action.get("item_id"),
+            quantity=client_action.get("quantity") or 1,
+            user_id=user_id
+        )
+        if availability.get("available"):
+            return None
+
+        updated_context = self._remove_unavailable_item_from_context(
+            context_state=context_state,
+            item_id=client_action.get("item_id")
+        )
+        fallback_analysis = normalize_nlp_analysis(analysis)
+        fallback_analysis["intent"]["value"] = "pedir_recomendacion"
+        fallback_analysis["entities"]["product_id"] = None
+        fallback_analysis["entities"]["promotion_id"] = None
+        fallback_analysis["decision"]["next_action"] = "respond"
+        fallback_analysis["metadata"]["excluded_item_ids"] = list(updated_context.get("excluded_item_ids") or [])
+
+        recomendacion = self.recomendacion_service.recomendar_productos(
+            user_id=user_id,
+            mensaje=mensaje,
+            analysis=fallback_analysis
+        )
+        items = recomendacion.get("items") or []
+        tipo = recomendacion.get("tipo") if items else "texto"
+        respuesta = (
+            "Esa opcion ya no esta disponible. Te muestro alternativas disponibles."
+            if items else
+            "Esa opcion ya no esta disponible y no encontre alternativas por ahora."
+        )
+        return self._build_response(
+            respuesta=respuesta,
+            items=items,
+            tipo=tipo,
+            context_state=updated_context,
+            client_action=None
+        )
+
+    def _remove_unavailable_item_from_context(self, context_state, item_id):
+        updated_context = dict(context_state or {})
+        updated_context["last_recommendations"] = [
+            item for item in (updated_context.get("last_recommendations") or [])
+            if item.get("item_id") != item_id
+        ]
+        selected = updated_context.get("last_selected_item")
+        if isinstance(selected, dict) and selected.get("item_id") == item_id:
+            updated_context["last_selected_item"] = None
+        return self.context_resolver.append_excluded_item(updated_context, item_id)
 
     def _sanitize_error(self, error):
         return str(error).splitlines()[0][:300]

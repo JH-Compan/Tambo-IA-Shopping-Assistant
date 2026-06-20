@@ -8,7 +8,6 @@ class ProductoRepository:
             supabase
             .table("cat_products")
             .select("*")
-            .eq("is_active", True)
         )
         if limite:
             query = query.limit(limite)
@@ -30,7 +29,6 @@ class ProductoRepository:
             supabase
             .table("cat_products")
             .select("*")
-            .eq("is_active", True)
             .ilike("name", f"%{texto}%")
         )
         if limite:
@@ -44,7 +42,6 @@ class ProductoRepository:
             .table("cat_products")
             .select("*")
             .eq("category_id", category_id)
-            .eq("is_active", True)
         )
         if limite:
             query = query.limit(limite)
@@ -56,7 +53,6 @@ class ProductoRepository:
             supabase
             .table("cat_products")
             .select("*")
-            .eq("is_active", True)
             .order("price")
         )
         if limite:
@@ -69,7 +65,6 @@ class ProductoRepository:
             supabase
             .table("cat_promotions")
             .select("*")
-            .eq("is_active", True)
         )
         if limite:
             query = query.limit(limite)
@@ -84,3 +79,51 @@ class ProductoRepository:
             .execute()
         )
         return response.data
+
+    def obtener_producto_por_id(self, product_id):
+        response = (
+            supabase
+            .table("cat_products")
+            .select("*")
+            .eq("id", product_id)
+            .limit(1)
+            .execute()
+        )
+        return (response.data or [None])[0]
+
+    def obtener_promocion_por_id(self, promotion_id):
+        response = (
+            supabase
+            .table("cat_promotions")
+            .select("*")
+            .eq("id", promotion_id)
+            .limit(1)
+            .execute()
+        )
+        return (response.data or [None])[0]
+
+    def obtener_cantidad_promocion_comprada_por_usuario(self, user_id, promotion_id):
+        if not user_id or not promotion_id:
+            return 0
+
+        orders_response = (
+            supabase
+            .table("sales_orders")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("status", "completed")
+            .execute()
+        )
+        order_ids = [row.get("id") for row in (orders_response.data or []) if row.get("id")]
+        if not order_ids:
+            return 0
+
+        items_response = (
+            supabase
+            .table("sales_order_items")
+            .select("quantity")
+            .eq("promotion_id", promotion_id)
+            .in_("order_id", order_ids)
+            .execute()
+        )
+        return sum(int((row or {}).get("quantity") or 0) for row in (items_response.data or []))
