@@ -73,13 +73,10 @@
 - HTML
 - CSS
 - JavaScript
-- Excel
+- Python
+- SupaBase
 - Git y GitHub
 - Google Drive
-
-### Opcionales
-- Python con Flask
-- Docker
 
 
 ## 7. Estructura base del repositorio
