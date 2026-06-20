@@ -1,146 +1,146 @@
 """
 orden_controller.py
-POST /api/ordenes       → registra una orden completa y descuenta stock
-POST /api/chat/cerrar   → cierra la conversación activa del usuario
+POST /api/ordenes       -> registra una orden transaccional en Supabase
+POST /api/chat/cerrar   -> cierra la conversación activa del usuario
 """
-from flask import Blueprint, jsonify, request
-from config.supabase_client import supabase
 from datetime import datetime
-import uuid
- 
+
+from flask import Blueprint, jsonify, request
+
+from config.supabase_client import supabase
+
+
 orden_bp = Blueprint("orden_bp", __name__)
- 
- 
+
+VALID_ITEM_TYPES = {
+    "product": "product",
+    "promotion": "promotion",
+    "producto": "product",
+    "promocion": "promotion",
+    "promoción": "promotion",
+}
+
+
+def _build_error_response(message, status_code):
+    return jsonify({"success": False, "error": message}), status_code
+
+
+def _normalize_item_type(value):
+    return VALID_ITEM_TYPES.get(str(value or "").strip().lower())
+
+
+def _parse_rpc_error(exc):
+    if hasattr(exc, "message") and exc.message:
+        raw_message = str(exc.message)
+    elif getattr(exc, "args", None):
+        raw_message = str(exc.args[0])
+    else:
+        raw_message = str(exc)
+
+    normalized = raw_message.lower()
+
+    if "stock:" in normalized or "stock insuficiente" in normalized:
+        if "STOCK:" in raw_message:
+            return raw_message.split("STOCK:", 1)[-1].strip(), 409
+        return "No hay stock suficiente para completar la compra", 409
+
+    if "validation:" in normalized:
+        if "VALIDATION:" in raw_message:
+            return raw_message.split("VALIDATION:", 1)[-1].strip(), 400
+        return "No se pudo validar la orden", 400
+
+    return "No se pudo registrar la compra en este momento", 500
+
+
 @orden_bp.route("/api/ordenes", methods=["POST"])
 def crear_orden():
-    data = request.get_json()
+    data = request.get_json(silent=True)
     if not data:
-        return jsonify({"error": "Se esperaba un cuerpo JSON"}), 400
- 
-    user_id         = data.get("user_id")
+        return _build_error_response("Se esperaba un cuerpo JSON válido", 400)
+
+    user_id = data.get("user_id")
     conversation_id = data.get("conversation_id")
-    items           = data.get("items", [])
-    total           = data.get("total", 0)
- 
+    items = data.get("items")
+
     if not user_id:
-        return jsonify({"error": "El campo 'user_id' es obligatorio"}), 400
-    if not items:
-        return jsonify({"error": "El carrito está vacío"}), 400
- 
+        return _build_error_response("El campo 'user_id' es obligatorio", 400)
+    if not isinstance(items, list) or not items:
+        return _build_error_response("El carrito está vacío", 400)
+    if len(items) > 50:
+        return _build_error_response("La orden no puede contener más de 50 ítems", 400)
+
+    normalized_items = []
+    for index, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            return _build_error_response(f"El ítem #{index} no tiene un formato válido", 400)
+
+        item_id = str(item.get("item_id") or "").strip()
+        item_type = _normalize_item_type(item.get("item_type"))
+        quantity = item.get("quantity")
+
+        if not item_id:
+            return _build_error_response(f"El ítem #{index} debe incluir item_id", 400)
+        if not item_type:
+            return _build_error_response(f"El ítem #{index} tiene un item_type inválido", 400)
+        if isinstance(quantity, bool) or not isinstance(quantity, int):
+            return _build_error_response(f"El ítem #{index} debe incluir quantity como entero", 400)
+        if quantity < 1 or quantity > 100:
+            return _build_error_response(f"El ítem #{index} debe incluir quantity entre 1 y 100", 400)
+
+        normalized_items.append({
+            "item_id": item_id,
+            "item_type": item_type,
+            "quantity": quantity,
+        })
+
     try:
-        # 1. Crear la orden en sales_orders
-        orden_id = str(uuid.uuid4())
-        supabase.table("sales_orders").insert({
-            "id":              orden_id,
-            "user_id":         user_id,
-            "conversation_id": conversation_id,
-            "total_amount":    total,
-            "status":          "completed",
-            "order_date":      datetime.now().isoformat(),
-        }).execute()
- 
-        # 2. Insertar items y descontar stock
-        for item in items:
-            item_id   = item.get("item_id")
-            item_type = item.get("item_type", "producto")
-            quantity  = int(item.get("quantity", 1))
-            price     = float(item.get("unit_price", 0))
- 
-            # Convertir a los valores que acepta Supabase
-            # La tabla usa "product" y "promotion" en inglés
-            item_type_db = "product" if item_type in ("producto", "product") else "promotion"
- 
-            supabase.table("sales_order_items").insert({
-                "id":           str(uuid.uuid4()),
-                "order_id":     orden_id,
-                "item_type":    item_type_db,
-                "product_id":   item_id if item_type_db == "product"    else None,
-                "promotion_id": item_id if item_type_db == "promotion"  else None,
-                "quantity":     quantity,
-                "unit_price":   price,
-                "subtotal":     quantity * price
-            }).execute()
- 
-            # Descontar stock
-            if item_type_db == "product":
-                _descontar_stock_producto(item_id, quantity)
-            else:
-                _descontar_stock_promocion(item_id, quantity)
- 
+        result = supabase.rpc(
+            "create_order_transaction",
+            {
+                "p_user_id": user_id,
+                "p_conversation_id": conversation_id,
+                "p_items": normalized_items,
+            }
+        ).execute()
+
+        payload = result.data or {}
+        if isinstance(payload, list):
+            payload = payload[0] if payload else {}
+
+        if payload.get("success") is not True:
+            return _build_error_response("No se pudo registrar la compra", 500)
+
         return jsonify({
-            "success":  True,
-            "orden_id": orden_id,
-            "mensaje":  "Orden registrada correctamente"
+            "success": True,
+            "order_id": payload.get("order_id"),
+            "total_amount": payload.get("total_amount", 0),
+            "items_count": payload.get("items_count", len(normalized_items)),
+            "message": "Orden registrada correctamente",
         }), 201
- 
-    except Exception as e:
-        print(f"[ERROR] crear_orden: {e}")
-        return jsonify({"error": str(e)}), 500
- 
- 
-def _descontar_stock_producto(product_id: str, quantity: int):
-    try:
-        res = supabase.table("cat_products") \
-            .select("stock") \
-            .eq("id", product_id) \
-            .single() \
-            .execute()
- 
-        if not res.data:
-            return
- 
-        stock_actual = int(res.data.get("stock", 0))
-        nuevo_stock  = max(0, stock_actual - quantity)
-        is_active    = nuevo_stock > 0
- 
-        supabase.table("cat_products").update({
-            "stock":      nuevo_stock,
-            "is_active":  is_active,
-            "updated_at": datetime.now().isoformat()
-        }).eq("id", product_id).execute()
- 
-        print(f"[OK] Stock actualizado: {product_id} → {nuevo_stock}")
- 
-    except Exception as e:
-        print(f"[WARN] No se pudo descontar stock de {product_id}: {e}")
- 
- 
-def _descontar_stock_promocion(promo_id: str, quantity: int):
-    try:
-        res = supabase.table("cat_promotion_items") \
-            .select("product_id, quantity") \
-            .eq("promotion_id", promo_id) \
-            .execute()
- 
-        if not res.data:
-            return
- 
-        for promo_item in res.data:
-            prod_id   = promo_item.get("product_id")
-            prod_qty  = int(promo_item.get("quantity", 1))
-            total_qty = prod_qty * quantity
-            _descontar_stock_producto(prod_id, total_qty)
- 
-    except Exception as e:
-        print(f"[WARN] No se pudo descontar stock de promoción {promo_id}: {e}")
- 
- 
+
+    except Exception as exc:
+        message, status_code = _parse_rpc_error(exc)
+        return _build_error_response(message, status_code)
+
+
 @orden_bp.route("/api/chat/cerrar", methods=["POST"])
 def cerrar_conversacion():
-    data            = request.get_json()
-    conversation_id = data.get("conversation_id")
- 
+    data = request.get_json(silent=True)
+    if not data:
+        return _build_error_response("Se esperaba un cuerpo JSON válido", 400)
+
+    conversation_id = str(data.get("conversation_id") or "").strip()
+
     if not conversation_id:
-        return jsonify({"error": "conversation_id es obligatorio"}), 400
- 
+        return _build_error_response("conversation_id es obligatorio", 400)
+
     try:
         supabase.table("chat_conversations").update({
-            "status":   "closed",
+            "status": "closed",
             "ended_at": datetime.now().isoformat()
         }).eq("id", conversation_id).execute()
- 
+
         return jsonify({"success": True, "mensaje": "Conversación cerrada"}), 200
- 
-    except Exception as e:
-        print(f"[WARN] No se pudo cerrar conversación {conversation_id}: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+
+    except Exception:
+        return _build_error_response("No se pudo cerrar la conversación", 500)
