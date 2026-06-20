@@ -13,7 +13,7 @@
 
 ## Diagrama de Casos de Uso (PlantUML)
 
-![](docs/backlog/Imagenes/casos-uso.jpeg)
+![](/Imagenes/casos-uso.jpeg)
 
 ## Tabla de Casos de Uso
 
