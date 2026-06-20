@@ -9,7 +9,7 @@ recomendacion_repository = RecomendacionRepository()
 
 @chat_bp.route("/api/chat", methods=["POST"])
 def chat():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     user_id = data.get("user_id", "USR001")
     mensaje = data.get("mensaje")
@@ -18,18 +18,27 @@ def chat():
     if not mensaje:
         return jsonify({"error": "El campo 'mensaje' es obligatorio"}), 400
 
-    resultado = chatbot_service.procesar_mensaje(
-        user_id=user_id,
-        mensaje=mensaje,
-        conversation_id=conversation_id
-    )
-
-    return jsonify(resultado), 200
+    try:
+        resultado = chatbot_service.procesar_mensaje(
+            user_id=user_id,
+            mensaje=mensaje,
+            conversation_id=conversation_id
+        )
+        return jsonify(resultado), 200
+    except Exception:
+        return jsonify({
+            "success": False,
+            "response": "No pude procesar tu solicitud en este momento.",
+            "items": [],
+            "intent": "consulta_general",
+            "confidence": 0.0,
+            "requires_clarification": False
+        }), 500
 
 
 @chat_bp.route("/api/feedback", methods=["POST"])
 def feedback():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     conversation_id = data.get("conversation_id")
     rating = data.get("rating")
