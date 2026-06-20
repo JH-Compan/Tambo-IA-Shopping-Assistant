@@ -19,24 +19,6 @@ Construir la primera versión funcional del chatbot, permitiendo consultar promo
 | T-S1-07 | Implementar carrito de compras básico | PB-04 | Frontend / Lógica | Alta | Pendiente |
 | T-S1-08 | Registrar evidencias del Sprint 1 | Evidencias | Equipo | Media | Pendiente |
 
-
-## Sprint 2 - Recomendaciones-Dashboard, stock y cierre
-
-**Objetivo del Sprint 2:**  
-Completar las funcionalidades de recomendaciones, validación de stock, resumen de pedido, registro de interacciones, pruebas finales y documentación de la demo.
-
-| ID | Tarea | Product Backlog relacionado | Responsable | Prioridad | Estado |
-|---|---|---|---|---|---|
-| T-S2-01 | Implementar recomendaciones para clientes nuevos | PB-03 | IA / Datos | Alta | Pendiente |
-| T-S2-02 | Implementar recomendaciones basadas en historial simulado | PB-05 | IA / Datos | Alta | Pendiente |
-| T-S2-03 | Preparar historial de compras simulado en Supabase | PB-05 / PB-08 | Datos | Alta | Pendiente |
-| T-S2-04 | Implementar validación básica de stock | PB-06 | Lógica / Datos | Media | Pendiente |
-| T-S2-06 | Implementar resumen final del pedido | PB-07 | Frontend / Lógica | Media | Pendiente |
-| T-S2-07 | Registrar interacciones básicas del chatbot | PB-08 | Datos / Lógica | Media | Pendiente |
-| T-S2-08 | Realizar pruebas de recomendaciones, stock, resumen y administración | PB-03 / PB-05 / PB-06 / PB-07 / PB-08 | Pruebas | Alta | Pendiente |
-| T-S2-09 | Documentar evidencias finales del proyecto | Evidencias | Equipo | Media | Pendiente |
-| T-S2-10 | Preparar demostración final del sistema | Demo | Equipo | Alta | Pendiente |
-
 ## Estados
 
 | Estado | Significado |
@@ -52,4 +34,3 @@ Completar las funcionalidades de recomendaciones, validación de stock, resumen 
 | Sprint | Enfoque principal | Resultado esperado |
 |---|---|---|
 | Sprint 1 | Chatbot funcional básico | Interfaz, promociones, búsqueda y carrito |
-| Sprint 2 | Funcionalidades complementarias, Dashboard de gestión | Recomendaciones, stock, resumen, pruebas y demo final |
