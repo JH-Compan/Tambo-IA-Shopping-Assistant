@@ -1,0 +1,141 @@
+# **Sprint Review – Sprint 2**
+
+**Proyecto:** Tambo AI Shopping Assistant (Tambot)
+
+**Sprint:** Sprint 2 – Mejora del sistema y expansión funcional
+
+**Fecha:** 20/06/2026
+
+## **Objetivo del Sprint**
+
+Mejorar y ampliar las funcionalidades del chatbot Tambot, incorporando recomendaciones personalizadas, control de stock en tiempo real, registro de interacciones de usuarios y el desarrollo del dashboard administrativo conectado a Supabase.
+
+## **Participantes**
+
+- Camilo Silva  
+- Antony Zuñiga  
+- Michael Gavino  
+- Alexander Manosalva  
+- Jhunior Herrera
+
+## **Funcionalidades Revisadas**
+
+### **PB-05 – Sistema de recomendaciones personalizadas**
+
+- **Resultado:** Se implementó un módulo de recomendaciones basado en el historial de interacción del usuario, permitiendo sugerir productos relacionados con sus búsquedas anteriores.  
+- **Evidencias:**  
+  * Registro de historial de usuario en Supabase.
+
+  \[Insertar Imagen: Evidencia11.jpeg\]  
+    *Análisis de perfiles y mejores clientes para el motor de recomendaciones.*
+
+  * Generación de recomendaciones en el chatbot.  
+  * Respuesta personalizada en la interfaz conversacional.  
+- **Estado:** Completado
+
+### **PB-06 – Control de stock en tiempo real**
+
+- **Resultado:** Se implementó la validación de stock en tiempo real mediante consultas directas a Supabase, evitando la sugerencia de productos no disponibles.  
+- **Evidencias:**  
+  * Consulta de stock desde backend Flask.  
+  * Validación de disponibilidad en búsqueda de productos.  
+  * Mensaje de alerta cuando un producto no tiene stock.  
+- **Estado:** Completado
+
+### **PB-07 – Registro de interacciones de usuarios**
+
+- **Resultado:** Se implementó un sistema de logging que almacena las interacciones del usuario con el chatbot para análisis posterior.  
+- **Evidencias:**  
+  * Registro de conversaciones en base de datos.  
+  * Visualización de historial de interacción.
+
+  \[Insertar Imagen: Evidencia13.jpeg\]  
+    *Métricas de analítica conversacional, intenciones detectadas y horas pico.*
+
+- **Estado:** Completado
+
+### **PB-08 – Dashboard administrativo**
+
+- **Resultado:** Se desarrolló un dashboard básico para la administración del sistema, permitiendo visualizar productos, promociones, stock e interacciones de usuarios.  
+- **Evidencias:**  
+  * Interfaz del dashboard administrativo.  
+  * Visualización de productos y stock.  
+  * Sección de métricas y actividad de usuarios.
+
+  \[Insertar Imagen: Evidencia9.jpeg\]  
+    *Vista del panel general conectado a la base de datos de Supabase.*  
+    \[Insertar Imagen: Evidencia10.jpeg\]  
+    *Reporte operativo de ingresos, productos más vendidos y categorías con mayor rotación.*
+
+- **Estado:** En desarrollo / En revisión
+
+## **Aspectos Técnicos Revisados**
+
+Durante el Sprint Review se verificó:
+
+- Integración avanzada del backend Flask con Supabase PostgreSQL.  
+- Implementación de lógica de recomendación basada en historial de usuarios.  
+- Control de stock en tiempo real en consultas del chatbot.  
+- Registro persistente de interacciones del usuario.  
+- Desarrollo inicial del dashboard administrativo conectado a la base de datos.  
+- Mejora en la estructura de endpoints REST y organización del backend.
+
+## **Retroalimentación Recibida**
+
+Se identificó la necesidad de:
+
+- Completar el dashboard administrativo con métricas más avanzadas.  
+- Mejorar la interfaz visual del panel de administración.  
+- Optimizar el sistema de recomendaciones para hacerlo más preciso.  
+- Realizar pruebas de carga y rendimiento del chatbot.  
+- Mejorar la seguridad en el acceso a datos del backend.  
+- Integrar completamente el dashboard con todos los módulos del sistema.
+
+\[Insertar Imagen: Evidencia12.jpeg\]
+
+*Estado actual del embudo de conversión y tasa de aceptación del asistente.*
+
+**Nota de Ajuste:** Como se evidencia en la gráfica superior, la tasa de aceptación de recomendaciones se encuentra en 0% debido a que el módulo interactivo apenas se ha desplegado en este sprint. La optimización y calibración de los filtros inteligentes del motor de recomendación se priorizará en el próximo ciclo.
+
+## **Métricas del Sprint**
+
+| Métrica | Valor |
+| :---- | :---- |
+| Historias comprometidas | 4 |
+| Historias completadas | 3 |
+| Story Points comprometidos | 21 SP |
+| Story Points completados | 17 SP |
+| Velocity | 17 SP |
+
+### **Burndown Chart — Sprint 2**
+
+| Día | SP Restantes (ideal) | SP Restantes (real) |
+| :---- | :---- | :---- |
+| Día 1 | 21 | 21 |
+| Día 2 | 18 | 19 |
+| Día 3 | 15 | 17 |
+| Día 4 | 12 | 14 |
+| Día 5 | 9 | 12 |
+| Día 6 | 6 | 9 |
+| Día 7 | 3 | 6 |
+| Fin Sprint | 0 | 4 |
+
+## **Trabajo Pendiente para el Próximo Sprint**
+
+- Completar el dashboard administrativo con métricas avanzadas en tiempo real.  
+- Optimizar el sistema de recomendaciones con mayor precisión y filtros inteligentes.  
+- Mejorar la seguridad del backend (autenticación y autorización).  
+- Implementar analítica avanzada de comportamiento de usuarios.  
+- Finalizar pruebas integrales del sistema completo.  
+- Mejorar la interfaz del chatbot para hacerlo más fluido y rápido.  
+- Integrar notificaciones automáticas de promociones al usuario.  
+- Optimizar rendimiento de consultas a Supabase.
+
+## **Conclusión**
+
+Durante el Sprint 2 se logró avanzar significativamente en la evolución del sistema Tambot, incorporando funcionalidades clave como recomendaciones personalizadas, control de stock en tiempo real y registro de interacciones de usuarios.
+
+Asimismo, se inició el desarrollo del dashboard administrativo, permitiendo visualizar y gestionar información del sistema de forma centralizada. La integración entre Flask y Supabase se fortaleció, mejorando la eficiencia del flujo de datos.
+
+Aunque algunas funcionalidades del dashboard aún están en desarrollo, el sprint cumple con la mayoría de los objetivos planteados, sentando una base sólida para el siguiente sprint, donde se enfocará en la optimización, seguridad y finalización del sistema completo.
+
