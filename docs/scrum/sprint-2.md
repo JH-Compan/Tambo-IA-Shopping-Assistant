@@ -1,4 +1,4 @@
-# Sprint 2 - Función Comleta
+# Sprint 2 - Función Completa
 
 ## Planificación inicial
 
