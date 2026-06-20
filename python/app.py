@@ -41,6 +41,9 @@ def crear_app():
                 "chat": "/api/chat"
             }
         }), 200
+    @app.route("/<path:filename>", methods=["GET"])
+    def frontend_files(filename):
+        return send_from_directory(FRONTEND_DIR, filename)
 
     @app.route("/api/health", methods=["GET"])
     def health():

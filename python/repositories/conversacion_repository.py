@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from config.supabase_client import supabase
 from utils.id_generator import generar_id
 
@@ -14,22 +15,17 @@ class ConversacionRepository:
             "ended_at": None
         }
 
-        try:
-            response = (
-                supabase
-                .table("chat_conversations")
-                .insert(nueva_conversacion)
-                .execute()
-            )
+        response = (
+            supabase
+            .table("chat_conversations")
+            .insert(nueva_conversacion)
+            .execute()
+        )
 
-            if response.data:
-                return response.data[0]
+        if response.data:
+            return response.data[0]
 
-        except Exception as error:
-            print(f"[WARN] No se pudo guardar la conversación en Supabase: {error}")
-
-        # Fallback para que el chatbot siga funcionando aunque Supabase bloquee INSERT por RLS.
-        return nueva_conversacion
+        raise RuntimeError("No se pudo crear la conversación en Supabase.")
 
     def guardar_mensaje(self, conversation_id, sender_type, content, intent=None):
         nuevo_mensaje = {
@@ -41,22 +37,7 @@ class ConversacionRepository:
             "created_at": datetime.now().isoformat(timespec="seconds")
         }
 
-        try:
-            response = (
-                supabase
-                .table("chat_messages")
-                .insert(nuevo_mensaje)
-                .execute()
-            )
-
-            if response.data:
-                return response.data[0]
-
-        except Exception as error:
-            print(f"[WARN] No se pudo guardar el mensaje en Supabase: {error}")
-
-        # Fallback: no detiene la respuesta del chatbot si Supabase no permite escribir.
-        return nuevo_mensaje
+        return self._insert_single("chat_messages", nuevo_mensaje)
 
     def obtener_historial(self, conversation_id):
         try:
@@ -71,8 +52,7 @@ class ConversacionRepository:
 
             return response.data
 
-        except Exception as error:
-            print(f"[WARN] No se pudo obtener historial desde Supabase: {error}")
+        except Exception:
             return []
 
     def cerrar_conversacion(self, conversation_id):
@@ -90,6 +70,33 @@ class ConversacionRepository:
 
             return response.data
 
-        except Exception as error:
-            print(f"[WARN] No se pudo cerrar la conversación en Supabase: {error}")
+        except Exception:
             return []
+
+    def _insert_single(self, table_name, payload):
+        try:
+            response = (
+                supabase
+                .table(table_name)
+                .insert(payload)
+                .execute()
+            )
+            data = response.data or []
+            return {
+                "success": len(data) == 1,
+                "attempted": 1,
+                "saved": len(data),
+                "data": data,
+                "error": None if data else f"No se pudo guardar en {table_name}."
+            }
+        except Exception as error:
+            return {
+                "success": False,
+                "attempted": 1,
+                "saved": 0,
+                "data": [],
+                "error": self._sanitize_error(error)
+            }
+
+    def _sanitize_error(self, error):
+        return str(error).splitlines()[0][:300]

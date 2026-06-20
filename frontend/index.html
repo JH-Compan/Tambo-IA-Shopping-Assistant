@@ -3,204 +3,225 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TamboBot — Acceso</title>
+<title>Tambot + — Acceso</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
+
 <script>
 tailwind.config = {
-    theme: {
-        extend: {
-            colors: {
-                tambo: { purple: '#4F1D7C', yellow: '#FFCC00' },
-                wa:    { teal: '#008069' }
-            }
+  theme: {
+    extend: {
+      colors: {
+        wa: {
+          green: '#00a884',
+          dark: '#0b141a',
+          card: '#111b21',
+          soft: '#202c33'
         }
+      }
     }
+  }
 }
 </script>
+
 </head>
 
-<body class="bg-[#0b141a] min-h-screen flex justify-center items-center p-4">
+<body class="bg-wa-dark min-h-screen flex items-center justify-center p-4">
 
-<div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
+<!-- CARD PRINCIPAL -->
+<div class="w-full max-w-sm bg-wa-card rounded-2xl shadow-xl overflow-hidden border border-white/5">
 
-    <!-- HEADER -->
-    <div class="bg-wa-teal px-6 py-6 text-white text-center">
-        <div class="w-16 h-16 rounded-full bg-tambo-purple border-4 border-tambo-yellow flex items-center justify-center text-tambo-yellow font-bold text-2xl mx-auto mb-3">
-            T+
-        </div>
-        <h1 class="text-xl font-bold">TamboBot IA</h1>
-        <p class="text-sm text-green-100 mt-1">Tu asistente de compras Tambo+</p>
+  <!-- HEADER -->
+  <div class="bg-wa-green text-white text-center py-6">
+    <div class="w-14 h-14 mx-auto bg-white text-wa-green font-bold text-xl rounded-full flex items-center justify-center mb-3">
+      T+
     </div>
+    <h1 class="text-lg font-semibold">Tambot +</h1>
+    <p class="text-xs text-white/80">Asistente inteligente de compras</p>
+  </div>
 
-    <!-- TABS -->
-    <div class="flex border-b">
-        <button id="tab-login"
-            onclick="switchTab('login')"
-            class="flex-1 py-3 text-sm font-bold text-wa-teal border-b-2 border-wa-teal">
-            Iniciar sesión
-        </button>
-        <button id="tab-registro"
-            onclick="switchTab('registro')"
-            class="flex-1 py-3 text-sm font-bold text-gray-400">
-            Registrarse
-        </button>
-    </div>
+  <!-- TABS -->
+  <div class="flex bg-wa-soft">
+    <button id="tab-login"
+      onclick="switchTab('login')"
+      class="flex-1 py-3 text-sm font-semibold text-wa-green border-b-2 border-wa-green">
+      Iniciar sesión
+    </button>
 
-    <!-- MENSAJE ERROR/ÉXITO -->
-    <div id="msg" class="hidden mx-6 mt-4 text-sm px-4 py-3 rounded-lg"></div>
+    <button id="tab-registro"
+      onclick="switchTab('registro')"
+      class="flex-1 py-3 text-sm font-semibold text-white/60">
+      Registrarse
+    </button>
+  </div>
 
-    <!-- ── PANEL LOGIN ── -->
-    <div id="panel-login" class="p-6">
-        <div class="mb-4">
-            <label class="block text-sm font-bold text-gray-700 mb-1">Usuario</label>
-            <input id="login-alias" type="text" placeholder="Ej: Maria"
-                class="w-full border rounded-xl px-4 py-2 text-sm outline-none focus:border-wa-teal"
-                onkeypress="handleKey(event,'login')"/>
-        </div>
-        <div class="mb-6">
-            <label class="block text-sm font-bold text-gray-700 mb-1">Contraseña</label>
-            <input id="login-pass" type="password" placeholder="Ej: USR031"
-                class="w-full border rounded-xl px-4 py-2 text-sm outline-none focus:border-wa-teal"
-                onkeypress="handleKey(event,'login')"/>
-            <p class="text-xs text-gray-400 mt-1">Tu contraseña es tu código (USR001, USR002...)</p>
-        </div>
-        <button onclick="login()"
-            class="w-full bg-wa-teal text-white font-bold py-3 rounded-xl hover:scale-105 transition">
-            Ingresar
-        </button>
-        <p class="text-center text-xs text-gray-400 mt-4">
-            ¿No tienes cuenta?
-            <span onclick="switchTab('registro')" class="text-wa-teal font-bold cursor-pointer">Regístrate</span>
-        </p>
-    </div>
+  <!-- MENSAJES -->
+  <div id="msg" class="hidden mx-4 mt-4 text-sm px-3 py-2 rounded-lg"></div>
 
-    <!-- ── PANEL REGISTRO ── -->
-    <div id="panel-registro" class="p-6 hidden">
-        <div class="mb-4">
-            <label class="block text-sm font-bold text-gray-700 mb-1">Nombre de usuario</label>
-            <input id="reg-alias" type="text" placeholder="Ej: Maria"
-                class="w-full border rounded-xl px-4 py-2 text-sm outline-none focus:border-wa-teal"/>
-            <p class="text-xs text-gray-400 mt-1">Este será tu nombre visible en el chat</p>
-        </div>
-        <div class="mb-6">
-            <label class="block text-sm font-bold text-gray-700 mb-1">Segmento</label>
-            <select id="reg-segment"
-                class="w-full border rounded-xl px-4 py-2 text-sm outline-none focus:border-wa-teal bg-white">
-                <option value="">Selecciona tu perfil...</option>
-                <option value="estudiante">🎓 Estudiante</option>
-                <option value="trabajador">💼 Trabajador</option>
-                <option value="hogar">🏠 Hogar</option>
-                <option value="oficina">🏢 Oficina</option>
-                <option value="ahorrador">💰 Ahorrador</option>
-                <option value="snack_lovers">🍿 Snack Lovers</option>
-                <option value="comprador_rapido">⚡ Comprador Rápido</option>
-                <option value="familia">👨‍👩‍👧 Familia</option>
-            </select>
-        </div>
-        <button onclick="registro()"
-            class="w-full bg-tambo-purple text-white font-bold py-3 rounded-xl hover:scale-105 transition">
-            Crear cuenta
-        </button>
-        <p class="text-center text-xs text-gray-400 mt-4">
-            ¿Ya tienes cuenta?
-            <span onclick="switchTab('login')" class="text-wa-teal font-bold cursor-pointer">Inicia sesión</span>
-        </p>
-    </div>
+  <!-- LOGIN -->
+  <div id="panel-login" class="p-5">
+    <input id="login-alias"
+      placeholder="Usuario"
+      class="w-full mb-3 px-4 py-3 rounded-lg bg-wa-soft text-white outline-none focus:ring-2 focus:ring-wa-green"/>
+
+    <input id="login-pass"
+      type="password"
+      placeholder="Contraseña"
+      class="w-full mb-5 px-4 py-3 rounded-lg bg-wa-soft text-white outline-none focus:ring-2 focus:ring-wa-green"/>
+
+    <button onclick="login()"
+      class="w-full bg-wa-green text-black font-semibold py-3 rounded-lg hover:opacity-90 transition">
+      Entrar
+    </button>
+
+    <p class="text-xs text-center text-white/50 mt-4">
+      ¿No tienes cuenta?
+      <span onclick="switchTab('registro')" class="text-wa-green cursor-pointer font-semibold">
+        Regístrate
+      </span>
+    </p>
+  </div>
+
+  <!-- REGISTRO -->
+  <div id="panel-registro" class="p-5 hidden">
+
+    <input id="reg-alias"
+      placeholder="Nombre de usuario"
+      class="w-full mb-3 px-4 py-3 rounded-lg bg-wa-soft text-white outline-none focus:ring-2 focus:ring-wa-green"/>
+
+    <select id="reg-segment"
+      class="w-full mb-5 px-4 py-3 rounded-lg bg-wa-soft text-white outline-none focus:ring-2 focus:ring-wa-green">
+      <option value="">Selecciona segmento</option>
+      <option value="estudiante">Estudiante</option>
+      <option value="trabajador">Trabajador</option>
+      <option value="hogar">Hogar</option>
+      <option value="ahorrador">Ahorrador</option>
+      <option value="snack">Snack lover</option>
+    </select>
+
+    <button onclick="registro()"
+      class="w-full bg-wa-green text-black font-semibold py-3 rounded-lg hover:opacity-90 transition">
+      Crear cuenta
+    </button>
+
+    <p class="text-xs text-center text-white/50 mt-4">
+      ¿Ya tienes cuenta?
+      <span onclick="switchTab('login')" class="text-wa-green cursor-pointer font-semibold">
+        Inicia sesión
+      </span>
+    </p>
+  </div>
 
 </div>
 
 <script>
 const API_BASE = "http://localhost:5000";
 
-/* ── TABS ── */
+/* TAB SWITCH */
 function switchTab(tab) {
-    hideMsg();
-    document.getElementById("panel-login").classList.toggle("hidden",    tab !== "login");
-    document.getElementById("panel-registro").classList.toggle("hidden", tab !== "registro");
-    document.getElementById("tab-login").className    = `flex-1 py-3 text-sm font-bold ${tab==="login"    ? "text-wa-teal border-b-2 border-wa-teal" : "text-gray-400"}`;
-    document.getElementById("tab-registro").className = `flex-1 py-3 text-sm font-bold ${tab==="registro" ? "text-wa-teal border-b-2 border-wa-teal" : "text-gray-400"}`;
+  hideMsg();
+
+  document.getElementById("panel-login").classList.toggle("hidden", tab !== "login");
+  document.getElementById("panel-registro").classList.toggle("hidden", tab !== "registro");
+
+  document.getElementById("tab-login").className =
+    `flex-1 py-3 text-sm font-semibold ${tab === "login" ? "text-wa-green border-b-2 border-wa-green" : "text-white/50"}`;
+
+  document.getElementById("tab-registro").className =
+    `flex-1 py-3 text-sm font-semibold ${tab === "registro" ? "text-wa-green border-b-2 border-wa-green" : "text-white/50"}`;
 }
 
-function handleKey(e, accion) {
-    if (e.key === "Enter") accion === "login" ? login() : registro();
-}
+/* MSG */
+function showMsg(text, type) {
+  const el = document.getElementById("msg");
+  el.textContent = text;
 
-/* ── MENSAJES ── */
-function showMsg(texto, tipo) {
-    const el = document.getElementById("msg");
-    el.textContent = texto;
-    el.className = `mx-6 mt-4 text-sm px-4 py-3 rounded-lg ${tipo === "error" ? "bg-red-50 border border-red-300 text-red-700" : "bg-green-50 border border-green-300 text-green-700"}`;
-    el.classList.remove("hidden");
+  el.className =
+    "mx-4 mt-4 text-sm px-3 py-2 rounded-lg " +
+    (type === "error"
+      ? "bg-red-500/10 text-red-300 border border-red-500/30"
+      : "bg-green-500/10 text-green-300 border border-green-500/30");
+
+  el.classList.remove("hidden");
 }
 
 function hideMsg() {
-    document.getElementById("msg").classList.add("hidden");
+  document.getElementById("msg").classList.add("hidden");
 }
 
-/* ── LOGIN ── */
+/* LOGIN */
 async function login() {
-    hideMsg();
-    const name_alias = document.getElementById("login-alias").value.trim();
-    const password   = document.getElementById("login-pass").value.trim();
+  hideMsg();
 
-    if (!name_alias || !password) {
-        showMsg("Completa todos los campos.", "error");
-        return;
+  const name_alias = document.getElementById("login-alias").value.trim();
+  const password   = document.getElementById("login-pass").value.trim();
+
+  if (!name_alias || !password) {
+    showMsg("Completa todos los campos", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/usuarios/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name_alias, password })
+    });
+
+    const data = await res.json();
+
+    if (data.valido) {
+      sessionStorage.setItem("tambo_user_id", data.usuario.user_code);
+      sessionStorage.setItem("tambo_user_name", data.usuario.name_alias);
+      sessionStorage.setItem("tambo_user_segment", data.usuario.segment || "");
+
+      window.location.href = "chat.html";
+    } else {
+      showMsg("Usuario o contraseña incorrectos", "error");
     }
 
-    try {
-        const res  = await fetch(`${API_BASE}/api/usuarios/login`, {
-            method:  "POST",
-            headers: { "Content-Type": "application/json" },
-            body:    JSON.stringify({ name_alias, password })
-        });
-        const data = await res.json();
-
-        if (data.valido) {
-            sessionStorage.setItem("tambo_user_id",      data.usuario.user_code);
-            sessionStorage.setItem("tambo_user_name",    data.usuario.name_alias);
-            sessionStorage.setItem("tambo_user_segment", data.usuario.segment || "");
-            window.location.href = "chat.html";
-        } else {
-            showMsg(data.error || "Usuario o contraseña incorrectos.", "error");
-        }
-    } catch (e) {
-        showMsg("No se pudo conectar al backend.", "error");
-    }
+  } catch (e) {
+    showMsg("Error de conexión con el servidor", "error");
+  }
 }
 
-/* ── REGISTRO ── */
+/* REGISTRO */
 async function registro() {
-    hideMsg();
-    const name_alias = document.getElementById("reg-alias").value.trim();
-    const segment    = document.getElementById("reg-segment").value;
+  hideMsg();
 
-    if (!name_alias) { showMsg("Escribe tu nombre de usuario.", "error"); return; }
-    if (!segment)    { showMsg("Selecciona tu segmento.",       "error"); return; }
+  const name_alias = document.getElementById("reg-alias").value.trim();
+  const segment    = document.getElementById("reg-segment").value;
 
-    try {
-        const res  = await fetch(`${API_BASE}/api/usuarios/registro`, {
-            method:  "POST",
-            headers: { "Content-Type": "application/json" },
-            body:    JSON.stringify({ name_alias, segment })
-        });
-        const data = await res.json();
+  if (!name_alias || !segment) {
+    showMsg("Completa todos los campos", "error");
+    return;
+  }
 
-        if (res.ok && data.success) {
-            showMsg(`✅ Cuenta creada. Tu código es: ${data.usuario.user_code} — guárdalo, es tu contraseña.`, "success");
-            // Esperar 3 segundos y pasar al login con los datos prellenados
-            setTimeout(() => {
-                switchTab("login");
-                document.getElementById("login-alias").value = name_alias;
-                document.getElementById("login-pass").value  = data.usuario.user_code;
-                showMsg(`Usa tu código ${data.usuario.user_code} como contraseña para ingresar.`, "success");
-            }, 3000);
-        } else {
-            showMsg(data.error || "Error al registrar.", "error");
-        }
-    } catch (e) {
-        showMsg("No se pudo conectar al backend.", "error");
+  try {
+    const res = await fetch(`${API_BASE}/api/usuarios/registro`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name_alias, segment })
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showMsg("Cuenta creada correctamente", "success");
+
+      setTimeout(() => {
+        switchTab("login");
+        document.getElementById("login-alias").value = name_alias;
+        document.getElementById("login-pass").value = data.usuario.user_code;
+      }, 1200);
+
+    } else {
+      showMsg("Error al registrar", "error");
     }
+
+  } catch (e) {
+    showMsg("Error de conexión", "error");
+  }
 }
 </script>
 
