@@ -1,4 +1,4 @@
-# Métricas del Sprint 2
+# Sprint 2 - Función Comleta
 
 ## Planificación inicial
 
