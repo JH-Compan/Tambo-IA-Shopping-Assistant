@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tambot + — Centro de Analítica</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        tambo: {
+          morado:  '#5B2A86',
+          moradoL: '#7C4BAE',
+          moradoD: '#2D1546',
+          amarillo:'#FFC629',
+          ink:     '#1C1024'
+        }
+      }
+    }
+  }
+}
+</script>
+
+<style>
+  :root{
+    --morado: #5B2A86;
+    --moradoL: #8A4FC4;
+    --moradoD: #2D1546;
+    --amarillo: #FFC629;
+    --bg: #F2F0F6;
+    --surface: rgba(255,255,255,0.72);
+    --surface-solid: #ffffff;
+    --line: rgba(45,21,70,0.08);
+    --ink: #1C1024;
+    --ink-soft: rgba(28,16,36,0.55);
+    --ink-faint: rgba(28,16,36,0.34);
+    --shadow-sm: 0 1px 2px rgba(45,21,70,0.04), 0 1px 1px rgba(45,21,70,0.03);
+    --shadow-md: 0 8px 24px -8px rgba(45,21,70,0.16), 0 2px 6px rgba(45,21,70,0.06);
+    --shadow-lg: 0 24px 48px -16px rgba(45,21,70,0.22), 0 4px 12px rgba(45,21,70,0.08);
+    --ease: cubic-bezier(.22,1,.36,1);
+  }
+
+  * { -webkit-font-smoothing: antialiased; }
+
+  html, body {
+    background:
+      radial-gradient(1100px 600px at 8% -10%, rgba(91,42,134,0.10), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(255,198,41,0.14), transparent 55%),
+      var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  .font-num { font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(91,42,134,0.18); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(91,42,134,0.32); }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* ---------- Glass surfaces ---------- */
+  .glass {
+    background: var(--surface);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid rgba(255,255,255,0.6);
+  }
+
+  .card {
+    background: var(--surface-solid);
+    border-radius: 22px;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+    transition: transform .45s var(--ease), box-shadow .45s var(--ease);
+    position: relative;
+  }
+  .card:hover {
+    box-shadow: var(--shadow-md);
+  }
+  .card-lift:hover { transform: translateY(-3px); }
+
+  .card-kpi {
+    background: linear-gradient(160deg, #ffffff 0%, #fbf9fe 100%);
+  }
+
+  /* signature glow ring on hover for KPI cards */
+  .kpi-glow::before {
+    content: "";
+    position: absolute; inset: -1px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, rgba(91,42,134,0.0), rgba(255,198,41,0.0));
+    transition: background .5s var(--ease);
+    pointer-events: none;
+  }
+  .kpi-glow:hover::before {
+    background: linear-gradient(135deg, rgba(91,42,134,0.10), rgba(255,198,41,0.16));
+  }
+
+  /* ---------- Skeleton ---------- */
+  .skeleton {
+    background: linear-gradient(100deg, #ece6f6 30%, #f5f1fb 50%, #ece6f6 70%);
+    background-size: 250% 100%;
+    animation: shimmer 1.5s ease infinite;
+    border-radius: 12px;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -50% 0; } }
+
+  /* ---------- Misc ---------- */
+  .badge-dot { width: 7px; height: 7px; border-radius: 50%; display:inline-block; }
+
+  .bar-track { background: rgba(91,42,134,0.08); border-radius: 999px; overflow: hidden; }
+  .bar-fill { background: linear-gradient(90deg, var(--morado), var(--moradoL)); border-radius: 999px; transition: width 1s var(--ease); }
+  .bar-fill-amarillo { background: linear-gradient(90deg, #E8A800, var(--amarillo)); border-radius: 999px; transition: width 1s var(--ease); }
+
+  .pill {
+    font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    letter-spacing: 0.01em;
+  }
+
+  .pulse-dot { animation: pulse-dot 2s infinite; }
+  @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+
+  .fade-up {
+    opacity: 0; transform: translateY(10px);
+    animation: fadeUp .55s var(--ease) forwards;
+  }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+  .segment-btn {
+    transition: all .25s var(--ease);
+  }
+  .segment-btn.active {
+    background: var(--ink);
+    color: white;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nav-link {
+    position: relative;
+    color: var(--ink-soft);
+    transition: color .2s;
+  }
+  .nav-link:hover { color: var(--ink); }
+  .nav-link.active { color: var(--morado); }
+  .nav-link.active::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: -9px;
+    height: 2.5px; border-radius: 2px;
+    background: var(--morado);
+  }
+
+  .icon-tile {
+    width: 38px; height: 38px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .ring-num {
+    transition: stroke-dashoffset 1.2s var(--ease);
+  }
+
+  @media print { .no-print { display: none !important; } }
+
+  .tooltip-soft {
+    box-shadow: var(--shadow-lg);
+  }
+</style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- ======================= NAVBAR ======================= -->
+<header class="sticky top-0 z-50 glass">
+  <div class="max-w-[1400px] mx-auto px-5 sm:px-8 py-3.5 flex items-center justify-between gap-6">
+
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="w-10 h-10 rounded-[12px] flex items-center justify-center font-extrabold text-base shrink-0"
+           style="background: linear-gradient(150deg, var(--morado), var(--moradoD)); color: var(--amarillo); box-shadow: var(--shadow-sm);">
+        T+
+      </div>
+      <div class="leading-tight">
+        <h1 class="font-bold text-[15px] tracking-tight" style="color:var(--ink)">Tambot <span style="color:var(--morado)">+</span></h1>
+        <p class="text-[11px]" style="color:var(--ink-faint)">Centro de Analítica</p>
+      </div>
+    </div>
+
+    <nav class="hidden md:flex items-center gap-7 text-[13px] font-semibold">
+      <a href="#resumen" class="nav-link active" data-section="resumen">Resumen</a>
+      <a href="#ventas" class="nav-link" data-section="ventas">Ventas</a>
+      <a href="#conversacion" class="nav-link" data-section="conversacion">Conversación</a>
+      <a href="#clientes" class="nav-link" data-section="clientes">Clientes</a>
+      <a href="#ia" class="nav-link" data-section="ia">Inteligencia&nbsp;IA</a>
+      <a href="#admin" class="nav-link" data-section="admin" style="color:var(--morado);font-weight:700;">Administración</a>
+    </nav>
+
+    <div class="flex items-center gap-2.5 no-print">
+      <span id="connection-badge" class="hidden sm:flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-full" style="background: rgba(91,42,134,0.06); color: var(--ink-soft);">
+        <span id="connection-dot" class="badge-dot pulse-dot" style="background:var(--amarillo)"></span>
+        <span id="connection-text">Conectando…</span>
+      </span>
+      <button id="btn-refresh" class="flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-2 rounded-full transition active:scale-95"
+              style="background: var(--ink); color:white; box-shadow: var(--shadow-sm);">
+        <svg id="refresh-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span class="hidden sm:inline">Actualizar</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ======================= MAIN ======================= -->
+<main class="max-w-[1400px] mx-auto px-5 sm:px-8 py-8 space-y-14">
+
+  <!-- ERROR BANNER -->
+  <div id="error-banner" class="hidden card border-l-[3px] px-5 py-4 text-sm fade-up" style="border-left-color:#E0455A; background:#FFF5F6;">
+    <strong class="font-semibold" style="color:#C5283D">No se pudo conectar con el backend</strong>
+    <span id="error-detail" class="block text-xs mt-1" style="color:#A23047"></span>
+  </div>
+
+  <!-- ======================= HERO / RESUMEN ======================= -->
+  <section id="resumen" class="space-y-6">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <p class="pill inline-block mb-2" style="background: rgba(255,198,41,0.25); color:#7A5800;">EN VIVO · SUPABASE</p>
+        <h2 class="text-[28px] sm:text-[34px] font-extrabold tracking-tight leading-none" style="color:var(--ink)">Resumen general</h2>
+        <p class="text-sm mt-1.5" style="color:var(--ink-faint)" id="last-update">Última actualización: —</p>
+      </div>
+    </div>
+
+    <!-- KPI GRID -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4" id="kpi-grid"></div>
+  </section>
+
+  <!-- ======================= VENTAS ======================= -->
+  <section id="ventas" class="space-y-5">
+    <div class="flex items-center gap-2.5">
+      <div class="icon-tile" style="background:rgba(91,42,134,0.08)">
+        <svg class="w-4.5 h-4.5" style="color:var(--morado)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h2l2 7h11l2-9H6M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"/></svg>
+      </div>
+      <h2 class="text-xl font-bold tracking-tight" style="color:var(--ink)">Ventas</h2>
+    </div>
+
+    <!-- métricas rápidas de venta -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4" id="venta-kpis"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+
+      <div class="card card-lift p-5 sm:p-6 lg:col-span-2">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-[15px]" style="color:var(--ink)">Evolución de ventas</h3>
+        </div>
+        <p class="text-xs mb-5" style="color:var(--ink-faint)">Pedidos y monto facturado por día</p>
+        <div class="relative" style="height: 260px;">
+          <canvas id="chart-ventas"></canvas>
+        </div>
+      </div>
+
+      <div class="card card-lift p-5 sm:p-6">
+        <h3 class="font-bold text-[15px] mb-1" style="color:var(--ink)">Estado de pedidos</h3>
+        <p class="text-xs mb-4" style="color:var(--ink-faint)">Distribución por status</p>
+        <div class="relative flex items-center justify-center" style="height: 190px;">
+          <canvas id="chart-estado"></canvas>
+        </div>
+        <div id="leyenda-estado" class="flex flex-wrap gap-x-4 gap-y-1.5 justify-center mt-4 text-[12px]"></div>
+      </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+
+      <!-- TOP COMPRADOS -->
+      <div class="card card-lift p-5 sm:p-6">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-[15px]" style="color:var(--ink)">Productos más vendidos</h3>
+          <span class="pill" style="background:rgba(91,42,134,0.08); color:var(--morado)">Por unidades</span>
+        </div>
+        <p class="text-xs mb-4" style="color:var(--ink-faint)">Ranking real de órdenes completadas</p>
+        <div id="top-comprados" class="space-y-3.5">
+          <div class="skeleton h-11 w-full"></div>
+          <div class="skeleton h-11 w-full"></div>
+          <div class="skeleton h-11 w-full"></div>
+        </div>
+      </div>
+
+      <!-- VENTAS POR CATEGORIA -->
+      <div class="card card-lift p-5 sm:p-6">
+        <h3 class="font-bold text-[15px] mb-1" style="color:var(--ink)">Ventas por categoría</h3>
+        <p class="text-xs mb-4" style="color:var(--ink-faint)">Ingresos agrupados por categoría de producto</p>
+        <div class="relative" style="height: 230px;">
+          <canvas id="chart-categorias"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- STOCK BAJO -->
+    <div class="card p-5 sm:p-6" style="border-color: rgba(224,69,90,0.25);">
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="w-4 h-4" style="color:#E0455A" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <h3 class="font-bold text-[15px]" style="color:var(--ink)">Alerta de inventario</h3>
+      </div>
+      <p class="text-xs mb-4" style="color:var(--ink-faint)">Productos activos con stock igual o menor a 10 unidades</p>
+      <div id="stock-bajo" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+    </div>
+  </section>
+
+  <!-- ======================= CONVERSACION ======================= -->
+  <section id="conversacion" class="space-y-5">
+    <div class="flex items-center gap-2.5">
+      <div class="icon-tile" style="background:rgba(91,42,134,0.08)">
+        <svg class="w-4.5 h-4.5" style="color:var(--morado)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A8.93 8.93 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      </div>
+      <h2 class="text-xl font-bold tracking-tight" style="color:var(--ink)">Conversación con el bot</h2>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+
+      <div class="card card-lift p-5 sm:p-6 lg:col-span-2">
+        <h3 class="font-bold text-[15px] mb-1" style="color:var(--ink)">Volumen de mensajes</h3>
+        <p class="text-xs mb-5" style="color:var(--ink-faint)">Mensajes enviados por usuarios vs. respuestas del bot</p>
+        <div class="relative" style="height: 240px;">
+          <canvas id="chart-mensajes"></canvas>
+        </div>
+      </div>
+
+      <div class="card card-lift p-5 sm:p-6">
+        <h3 class="font-bold text-[15px] mb-1" style="color:var(--ink)">Qué preguntan más</h3>
+        <p class="text-xs mb-4" style="color:var(--ink-faint)">Intención detectada en mensajes de usuario</p>
+        <div id="top-intents" class="space-y-3.5">
+          <div class="skeleton h-9 w-full"></div>
+          <div class="skeleton h-9 w-full"></div>
+          <div class="skeleton h-9 w-full"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+
+      <div class="card card-lift p-5 sm:p-6 lg:col-span-2">
+        <h3 class="font-bold text-[15px] mb-1" style="color:var(--ink)">Horas pico de actividad</h3>
+        <p class="text-xs mb-5" style="color:var(--ink-faint)">Mensajes recibidos según la hora del día (0–23h)</p>
+        <div class="relative" style="height: 200px;">
+          <canvas id="chart-horas"></canvas>
+        </div>
+      </div>
+
+      <div class="card card-lift p-5 sm:p-6">
+        <h3 class="font-bold text-[15px] mb-1" style="color:var(--ink)">Productos más consultados</h3>
+        <p class="text-xs mb-4" style="color:var(--ink-faint)">Interacciones dentro del chat</p>
+        <div id="top-consultados" class="space-y-3"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======================= CLIENTES ======================= -->
+  <section id="clientes" class="space-y-5">
+    <div class="flex items-center gap-2.5">
+      <div class="icon-tile" style="background:rgba(91,42,134,0.08)">
+        <svg class="w-4.5 h-4.5" style="color:var(--morado)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 100-8 4 4 0 000 8zm6 1.13a4 4 0 10-3-7.13"/></svg>
+      </div>
+      <h2 class="text-xl font-bold tracking-tight" style="color:var(--ink)">Clientes</h2>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+
+      <div class="card card-lift p-5 sm:p-6">
+        <h3 class="font-bold text-[15px] mb-1" style="color:var(--ink)">Segmentos de usuario</h3>
+        <p class="text-xs mb-4" style="color:var(--ink-faint)">Perfil declarado al registrarse</p>
+        <div class="relative flex items-center justify-center" style="height: 190px;">
+          <canvas id="chart-segmentos"></canvas>
+        </div>
+        <div id="leyenda-segmentos" class="flex flex-wrap gap-x-4 gap-y-1.5 justify-center mt-4 text-[12px]"></div>
+      </div>
+
+      <div class="card card-lift p-5 sm:p-6 lg:col-span-2">
+        <h3 class="font-bold text-[15px] mb-1" style="color:var(--ink)">Mejores clientes</h3>
+        <p class="text-xs mb-4" style="color:var(--ink-faint)">Por monto total comprado</p>
+        <div id="top-clientes" class="space-y-1"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======================= IA ======================= -->
+  <section id="ia" class="space-y-5">
+    <div class="flex items-center gap-2.5">
+      <div class="icon-tile" style="background:rgba(255,198,41,0.22)">
+        <svg class="w-4.5 h-4.5" style="color:#8A6800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.456-2.456L14.25 6l1.035-.259a3.375 3.375 0 002.456-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
+      </div>
+      <h2 class="text-xl font-bold tracking-tight" style="color:var(--ink)">Inteligencia del asistente</h2>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+
+      <!-- FUNNEL -->
+      <div class="card card-lift p-5 sm:p-6 lg:col-span-2">
+        <h3 class="font-bold text-[15px] mb-1" style="color:var(--ink)">Embudo de conversión</h3>
+        <p class="text-xs mb-5" style="color:var(--ink-faint)">De la conversación a la venta</p>
+        <div id="funnel" class="space-y-4"></div>
+      </div>
+
+      <!-- EFECTIVIDAD RECOMENDACIONES -->
+      <div class="card card-lift p-5 sm:p-6 flex flex-col items-center justify-center text-center">
+        <h3 class="font-bold text-[15px] mb-1 self-start" style="color:var(--ink)">Tasa de aceptación</h3>
+        <p class="text-xs mb-2 self-start" style="color:var(--ink-faint)">Recomendaciones elegidas por el cliente</p>
+        <div class="relative my-2" style="width:160px; height:160px;">
+          <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(91,42,134,0.08)" stroke-width="12"/>
+            <circle id="ring-aceptacion" cx="60" cy="60" r="52" fill="none" stroke="url(#gradRing)" stroke-width="12" stroke-linecap="round"
+                    stroke-dasharray="326.7" stroke-dashoffset="326.7" class="ring-num"/>
+            <defs>
+              <linearGradient id="gradRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#5B2A86"/>
+                <stop offset="100%" stop-color="#FFC629"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span id="pct-aceptacion" class="text-3xl font-extrabold font-num" style="color:var(--ink)">—</span>
+            <span class="text-[11px]" style="color:var(--ink-faint)">aceptación</span>
+          </div>
+        </div>
+        <p class="text-xs" style="color:var(--ink-faint)">
+          <span id="rec-aceptadas" class="font-semibold" style="color:var(--ink)">0</span> de
+          <span id="rec-total" class="font-semibold" style="color:var(--ink)">0</span> recomendaciones ·
+          score medio <span id="rec-score" class="font-semibold" style="color:var(--ink)">—</span>
+        </p>
+      </div>
+
+    </div>
+
+    <!-- SATISFACCION -->
+    <div class="card card-lift p-5 sm:p-6">
+      <h3 class="font-bold text-[15px] mb-1" style="color:var(--ink)">Satisfacción con el bot</h3>
+      <p class="text-xs mb-5" style="color:var(--ink-faint)">Calificaciones recibidas por los usuarios</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
+        <div class="flex items-center gap-4 sm:col-span-1">
+          <div class="text-5xl font-extrabold font-num" style="color:var(--morado)" id="rating-promedio">—</div>
+          <div>
+            <div id="rating-estrellas" class="text-xl leading-none" style="color:var(--amarillo)">★★★★★</div>
+            <p class="text-xs mt-1" style="color:var(--ink-faint)"><span id="rating-total">0</span> respuestas</p>
+          </div>
+        </div>
+        <div id="rating-bars" class="space-y-2 sm:col-span-2"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-center text-xs py-10" style="color:var(--ink-faint)">
+    Tambot + · Panel interno de analítica · Datos en vivo desde Supabase
+  </footer>
+
+</main>
+
+<script>
+/* =======================================================
+   CONFIG
+======================================================= */
+const API_BASE = "http://localhost:5000";
+const ENDPOINT = `${API_BASE}/api/admin/dashboard`;
+
+const C = {
+  morado: '#5B2A86',
+  moradoL: '#8A4FC4',
+  moradoD: '#2D1546',
+  amarillo: '#FFC629',
+  ink: '#1C1024',
+  gridline: 'rgba(45,21,70,0.06)'
+};
+
+const PALETA = ['#5B2A86', '#FFC629', '#9A6BC9', '#E0455A', '#2D1546', '#C9B3E0', '#7A5800'];
+
+let chartVentas, chartEstado, chartCategorias, chartMensajes, chartHoras, chartSegmentos;
+
+/* =======================================================
+   HELPERS
+======================================================= */
+function soles(n) {
+  return 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fechaCorta(iso) {
+  if (!iso || iso === 'sin_fecha') return '—';
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' });
+}
+function horaLabel(h) { return `${String(h).padStart(2,'0')}h`; }
+
+function etiquetaIntent(intent) {
+  const mapa = {
+    saludo: 'Saludo',
+    buscar_promociones: 'Buscar promociones',
+    recomendar_producto: 'Pedir recomendación',
+    cierre: 'Cierre de conversación',
+    consulta_general: 'Consulta general',
+    sin_clasificar: 'Sin clasificar'
+  };
+  return mapa[intent] || intent.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+}
+function etiquetaEstado(e) {
+  const mapa = { completed: 'Completado', pending: 'Pendiente', cancelled: 'Cancelado', processing: 'En proceso', desconocido: 'Sin estado' };
+  return mapa[e] || e;
+}
+function etiquetaSegmento(s) {
+  const mapa = {
+    estudiante: 'Estudiante', trabajador: 'Trabajador', hogar: 'Hogar', oficina: 'Oficina',
+    ahorrador: 'Ahorrador', snack_lovers: 'Snack lover', comprador_rapido: 'Comprador rápido',
+    familia: 'Familia', sin_segmento: 'Sin segmento'
+  };
+  return mapa[s] || s;
+}
+
+function setError(msg) {
+  document.getElementById('error-detail').textContent = msg || '';
+  document.getElementById('error-banner').classList.remove('hidden');
+}
+function clearError() { document.getElementById('error-banner').classList.add('hidden'); }
+
+function setConexion(ok, texto) {
+  const dot = document.getElementById('connection-dot');
+  const txt = document.getElementById('connection-text');
+  document.getElementById('connection-badge').classList.remove('hidden');
+  txt.textContent = texto;
+  dot.classList.remove('pulse-dot');
+  dot.style.background = ok ? '#27AE60' : '#E0455A';
+  if (!ok) dot.classList.add('pulse-dot');
+}
+
+/* animación de conteo */
+function animarNumero(el, valorFinal, esDecimal = false, prefijo = '', sufijo = '') {
+  const duracion = 900;
+  const inicio = performance.now();
+  const desde = 0;
+  function paso(ahora) {
+    const progreso = Math.min((ahora - inicio) / duracion, 1);
+    const easeOut = 1 - Math.pow(1 - progreso, 3);
+    const valorActual = desde + (valorFinal - desde) * easeOut;
+    el.textContent = prefijo + (esDecimal ? valorActual.toFixed(2) : Math.round(valorActual)).toLocaleString('es-PE') + sufijo;
+    if (progreso < 1) requestAnimationFrame(paso);
+  }
+  requestAnimationFrame(paso);
+}
+
+/* =======================================================
+   NAV SCROLLSPY
+======================================================= */
+function initNav() {
+  const links = document.querySelectorAll('.nav-link');
+  const sections = [...links].map(l => document.getElementById(l.dataset.section));
+
+  links.forEach(l => l.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById(l.dataset.section).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.nav-link[data-section="${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-40% 0px -50% 0px' });
+
+  sections.forEach(s => s && obs.observe(s));
+}
+
+/* =======================================================
+   KPI CARDS (resumen)
+======================================================= */
+function renderKPIs(resumen) {
+  const items = [
+    { label: 'Usuarios', valor: resumen.usuarios, icon: 'users' },
+    { label: 'Conversaciones', valor: resumen.conversaciones, icon: 'chat' },
+    { label: 'Mensajes', valor: resumen.mensajes, icon: 'message' },
+    { label: 'Productos', valor: resumen.productos, icon: 'box' },
+    { label: 'Promociones', valor: resumen.promociones, icon: 'tag' },
+    { label: 'Pedidos', valor: resumen.pedidos, icon: 'cart' },
+    { label: 'Recomendaciones', valor: resumen.recomendaciones, icon: 'star' },
+    { label: 'Feedback', valor: resumen.feedback, icon: 'heart' }
+  ];
+
+  const iconos = {
+    users: '<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 100-8 4 4 0 000 8zm6 1.13a4 4 0 10-3-7.13"/>',
+    chat: '<path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A8.93 8.93 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>',
+    message: '<path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>',
+    box: '<path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10M4 7v10l8 4"/>',
+    tag: '<path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5a1 1 0 01.7.3l8 8a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-8-8A1 1 0 014 11V5a2 2 0 012-2z"/>',
+    cart: '<path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>',
+    star: '<path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>',
+    heart: '<path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21l-7.682-7.682a4.5 4.5 0 010-6.364z"/>'
+  };
+
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = items.map((item, idx) => `
+    <div class="card card-kpi kpi-glow p-4 sm:p-5 fade-up overflow-hidden" style="animation-delay:${idx * 60}ms">
+      <div class="flex items-center justify-between mb-3">
+        <div class="icon-tile" style="background:${idx % 2 === 0 ? 'rgba(91,42,134,0.08)' : 'rgba(255,198,41,0.20)'}; color:${idx % 2 === 0 ? 'var(--morado)' : '#8A6800'}">
+          <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${iconos[item.icon]}</svg>
+        </div>
+      </div>
+      <p class="font-extrabold text-2xl sm:text-[28px] leading-none font-num kpi-value" style="color:var(--ink)" data-final="${item.valor || 0}">0</p>
+      <p class="text-[12px] sm:text-[13px] mt-1.5 font-medium" style="color:var(--ink-faint)">${item.label}</p>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.kpi-value').forEach(el => animarNumero(el, parseFloat(el.dataset.final)));
+}
+
+/* =======================================================
+   KPI de ventas (ticket promedio, etc.)
+======================================================= */
+function renderVentaKPIs(ticket) {
+  const items = [
+    { label: 'Total vendido', valor: soles(ticket.total_vendido) },
+    { label: 'Ticket promedio', valor: soles(ticket.ticket_promedio) },
+    { label: 'Pedido más alto', valor: soles(ticket.pedido_maximo) },
+    { label: 'Pedidos totales', valor: ticket.total_pedidos.toLocaleString('es-PE') }
+  ];
+
+  document.getElementById('venta-kpis').innerHTML = items.map((it, idx) => `
+    <div class="card card-lift p-4 sm:p-5 fade-up" style="animation-delay:${idx * 50}ms">
+      <p class="text-[12px] font-medium mb-1.5" style="color:var(--ink-faint)">${it.label}</p>
+      <p class="font-extrabold text-xl sm:text-2xl font-num" style="color:var(--ink)">${it.valor}</p>
+    </div>
+  `).join('');
+}
+
+/* =======================================================
+   RANKINGS HTML
+======================================================= */
+function renderRankingComprados(lista) {
+  const cont = document.getElementById('top-comprados');
+  if (!lista || lista.length === 0) {
+    cont.innerHTML = `<p class="text-sm py-4 text-center" style="color:var(--ink-faint)">Aún no hay ventas registradas.</p>`;
+    return;
+  }
+  const max = Math.max(...lista.map(p => p.unidades_vendidas), 1);
+
+  cont.innerHTML = lista.map((p, idx) => `
+    <div class="fade-up" style="animation-delay:${idx * 40}ms">
+      <div class="flex items-center justify-between text-[13.5px] mb-1.5">
+        <span class="font-semibold truncate pr-2" style="color:var(--ink)">
+          <span class="font-num" style="color:var(--ink-faint)">${String(idx + 1).padStart(2,'0')}</span>
+          &nbsp;${p.nombre}
+        </span>
+        <span class="font-bold shrink-0 font-num" style="color:var(--morado)">${p.unidades_vendidas} u.</span>
+      </div>
+      <div class="bar-track h-[7px]">
+        <div class="bar-fill h-[7px]" style="width:0%" data-w="${(p.unidades_vendidas / max) * 100}"></div>
+      </div>
+      <p class="text-[11px] mt-1" style="color:var(--ink-faint)">${soles(p.ingresos)} en ventas · stock actual ${p.stock ?? '—'}</p>
+    </div>
+  `).join('');
+
+  requestAnimationFrame(() => {
+    cont.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.w + '%');
+  });
+}
+
+function renderRankingConsultados(lista) {
+  const cont = document.getElementById('top-consultados');
+  if (!lista || lista.length === 0) {
+    cont.innerHTML = `<p class="text-sm py-4 text-center" style="color:var(--ink-faint)">Sin interacciones aún.</p>`;
+    return;
+  }
+  const max = Math.max(...lista.map(p => p.consultas), 1);
+
+  cont.innerHTML = lista.map((p, idx) => `
+    <div class="fade-up" style="animation-delay:${idx * 40}ms">
+      <div class="flex items-center justify-between text-[13px] mb-1">
+        <span class="font-medium truncate pr-2" style="color:var(--ink)">${p.nombre}</span>
+        <span class="font-semibold shrink-0 font-num" style="color:var(--ink-faint)">${p.consultas}</span>
+      </div>
+      <div class="bar-track h-[5px]">
+        <div class="bar-fill-amarillo h-[5px]" style="width:0%" data-w="${(p.consultas / max) * 100}"></div>
+      </div>
+    </div>
+  `).join('');
+
+  requestAnimationFrame(() => {
+    cont.querySelectorAll('.bar-fill-amarillo').forEach(b => b.style.width = b.dataset.w + '%');
+  });
+}
+
+function renderIntents(lista) {
+  const cont = document.getElementById('top-intents');
+  if (!lista || lista.length === 0) {
+    cont.innerHTML = `<p class="text-sm py-4 text-center" style="color:var(--ink-faint)">Sin mensajes clasificados.</p>`;
+    return;
+  }
+
+  cont.innerHTML = lista.map((it, idx) => `
+    <div class="fade-up" style="animation-delay:${idx * 40}ms">
+      <div class="flex items-center justify-between text-[13.5px] mb-1.5">
+        <span class="font-semibold" style="color:var(--ink)">${etiquetaIntent(it.intent)}</span>
+        <span class="font-bold font-num" style="color:var(--morado)">${it.porcentaje}%</span>
+      </div>
+      <div class="bar-track h-[7px]">
+        <div class="bar-fill h-[7px]" style="width:0%" data-w="${it.porcentaje}"></div>
+      </div>
+      <p class="text-[11px] mt-1" style="color:var(--ink-faint)">${it.cantidad} mensajes</p>
+    </div>
+  `).join('');
+
+  requestAnimationFrame(() => {
+    cont.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.w + '%');
+  });
+}
+
+function renderStockBajo(lista) {
+  const cont = document.getElementById('stock-bajo');
+  if (!lista || lista.length === 0) {
+    cont.innerHTML = `<p class="text-sm py-2 col-span-full" style="color:var(--ink-faint)">Todo el inventario está en niveles saludables.</p>`;
+    return;
+  }
+  cont.innerHTML = lista.map((p, idx) => `
+    <div class="rounded-2xl p-3.5 fade-up" style="background:rgba(224,69,90,0.06); border:1px solid rgba(224,69,90,0.18); animation-delay:${idx*40}ms">
+      <p class="text-[13px] font-semibold truncate" style="color:var(--ink)">${p.name}</p>
+      <div class="flex items-center justify-between mt-1.5">
+        <span class="text-[11px]" style="color:var(--ink-faint)">${soles(p.price)}</span>
+        <span class="text-[12px] font-bold font-num" style="color:#C5283D">${p.stock} u.</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTopClientes(lista) {
+  const cont = document.getElementById('top-clientes');
+  if (!lista || lista.length === 0) {
+    cont.innerHTML = `<p class="text-sm py-4 text-center" style="color:var(--ink-faint)">Aún no hay clientes con pedidos.</p>`;
+    return;
+  }
+  const max = Math.max(...lista.map(c => c.monto_total), 1);
+
+  cont.innerHTML = lista.map((c, idx) => `
+    <div class="flex items-center gap-3 py-2.5 fade-up" style="animation-delay:${idx*40}ms; border-bottom: 1px solid var(--line);">
+      <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[13px] shrink-0"
+           style="background:${PALETA[idx % PALETA.length]}1A; color:${PALETA[idx % PALETA.length]}">
+        ${c.nombre.slice(0,2).toUpperCase()}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[13.5px] font-semibold truncate" style="color:var(--ink)">${c.nombre}</span>
+          <span class="text-[13px] font-bold font-num shrink-0 ml-2" style="color:var(--ink)">${soles(c.monto_total)}</span>
+        </div>
+        <div class="bar-track h-[5px]">
+          <div class="bar-fill h-[5px]" style="width:0%" data-w="${(c.monto_total/max)*100}"></div>
+        </div>
+      </div>
+      <span class="pill shrink-0" style="background:rgba(91,42,134,0.08); color:var(--morado)">${etiquetaSegmento(c.segmento)}</span>
+    </div>
+  `).join('');
+
+  requestAnimationFrame(() => {
+    cont.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.w + '%');
+  });
+}
+
+function renderFunnel(lista) {
+  const cont = document.getElementById('funnel');
+  if (!lista || lista.length === 0) { cont.innerHTML = ''; return; }
+  const max = lista[0]?.cantidad || 1;
+
+  cont.innerHTML = lista.map((etapa, idx) => {
+    const pct = max ? (etapa.cantidad / max) * 100 : 0;
+    const pctConv = idx === 0 ? 100 : Math.round((etapa.cantidad / max) * 100);
+    return `
+    <div class="fade-up" style="animation-delay:${idx*70}ms">
+      <div class="flex items-center justify-between text-[13.5px] mb-1.5">
+        <span class="font-semibold" style="color:var(--ink)">${etapa.etapa}</span>
+        <span class="font-bold font-num" style="color:var(--ink)">${etapa.cantidad}
+          <span class="text-[11px] font-medium" style="color:var(--ink-faint)">(${pctConv}%)</span>
+        </span>
+      </div>
+      <div class="bar-track h-[14px]">
+        <div class="h-[14px] rounded-full" style="width:0%; background: linear-gradient(90deg, var(--morado), var(--moradoL)); transition: width 1s cubic-bezier(.22,1,.36,1);" data-w="${pct}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  requestAnimationFrame(() => {
+    cont.querySelectorAll('[data-w]').forEach(b => b.style.width = b.dataset.w + '%');
+  });
+}
+
+/* =======================================================
+   CHARTS
+======================================================= */
+function baseTooltip() {
+  return {
+    backgroundColor: '#1C1024',
+    padding: 10,
+    titleFont: { size: 12, weight: '600' },
+    bodyFont: { size: 12 },
+    cornerRadius: 10,
+    displayColors: false
+  };
+}
+
+function renderChartVentas(serie) {
+  const ctx = document.getElementById('chart-ventas');
+  if (chartVentas) chartVentas.destroy();
+  if (!serie || serie.length === 0) return;
+
+  chartVentas = new Chart(ctx, {
+    data: {
+      labels: serie.map(d => fechaCorta(d.fecha)),
+      datasets: [
+        { type: 'bar', label: 'Monto (S/)', data: serie.map(d => d.monto), backgroundColor: C.amarillo, borderRadius: 8, maxBarThickness: 28, yAxisID: 'y', order: 2 },
+        { type: 'line', label: 'Pedidos', data: serie.map(d => d.pedidos), borderColor: C.morado, backgroundColor: C.morado, tension: 0.4, pointRadius: 3, borderWidth: 2.5, yAxisID: 'y1', order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', align: 'end', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, font: { size: 11 } } },
+        tooltip: { ...baseTooltip(), callbacks: { label: c => c.dataset.label.includes('Monto') ? ` ${soles(c.parsed.y)}` : ` ${c.parsed.y} pedidos` } }
+      },
+      scales: {
+        y: { position: 'left', grid: { color: C.gridline }, border: { display: false }, ticks: { callback: v => 'S/' + v, font: { size: 10 } } },
+        y1: { position: 'right', grid: { display: false }, border: { display: false }, ticks: { precision: 0, font: { size: 10 } } },
+        x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderChartEstado(lista) {
+  const ctx = document.getElementById('chart-estado');
+  const leyenda = document.getElementById('leyenda-estado');
+  if (chartEstado) chartEstado.destroy();
+  if (!lista || lista.length === 0) { leyenda.innerHTML = `<p class="text-xs" style="color:var(--ink-faint)">Sin pedidos</p>`; return; }
+
+  const labels = lista.map(e => etiquetaEstado(e.estado));
+  const data = lista.map(e => e.cantidad);
+  const colores = labels.map((_, i) => PALETA[i % PALETA.length]);
+
+  chartEstado = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colores, borderWidth: 3, borderColor: '#fff', hoverOffset: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: baseTooltip() } }
+  });
+
+  leyenda.innerHTML = labels.map((l, i) => `<span class="flex items-center gap-1.5" style="color:var(--ink-soft)"><span class="badge-dot" style="background:${colores[i]}"></span>${l} <b class="font-num" style="color:var(--ink)">${data[i]}</b></span>`).join('');
+}
+
+function renderChartCategorias(lista) {
+  const ctx = document.getElementById('chart-categorias');
+  if (chartCategorias) chartCategorias.destroy();
+  if (!lista || lista.length === 0) return;
+
+  chartCategorias = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: lista.map(c => c.categoria),
+      datasets: [{ data: lista.map(c => c.ingresos), backgroundColor: C.morado, borderRadius: 8, maxBarThickness: 26 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...baseTooltip(), callbacks: { label: c => ` ${soles(c.parsed.x)}` } } },
+      scales: {
+        x: { grid: { color: C.gridline }, border: { display: false }, ticks: { callback: v => 'S/' + v, font: { size: 10 } } },
+        y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11, weight: '500' } } }
+      }
+    }
+  });
+}
+
+function renderChartMensajes(serie) {
+  const ctx = document.getElementById('chart-mensajes');
+  if (chartMensajes) chartMensajes.destroy();
+  if (!serie || serie.length === 0) return;
+
+  chartMensajes = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: serie.map(d => fechaCorta(d.fecha)),
+      datasets: [
+        { label: 'Usuario', data: serie.map(d => d.usuario), backgroundColor: C.morado, borderRadius: 6, stack: 's', maxBarThickness: 26 },
+        { label: 'Bot', data: serie.map(d => d.bot), backgroundColor: C.amarillo, borderRadius: 6, stack: 's', maxBarThickness: 26 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, font: { size: 11 } } }, tooltip: baseTooltip() },
+      scales: {
+        x: { stacked: true, grid: { display: false }, border: { display: false }, ticks: { font: { size: 10 } } },
+        y: { stacked: true, grid: { color: C.gridline }, border: { display: false }, ticks: { precision: 0, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderChartHoras(serie) {
+  const ctx = document.getElementById('chart-horas');
+  if (chartHoras) chartHoras.destroy();
+  if (!serie || serie.length === 0) return;
+
+  chartHoras = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: serie.map(d => horaLabel(d.hora)),
+      datasets: [{
+        data: serie.map(d => d.mensajes),
+        backgroundColor: serie.map(d => {
+          const max = Math.max(...serie.map(s => s.mensajes), 1);
+          const intensidad = d.mensajes / max;
+          return intensidad > 0.6 ? C.morado : intensidad > 0.25 ? '#9A6BC9' : '#E3D5F2';
+        }),
+        borderRadius: 5, maxBarThickness: 16
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...baseTooltip(), callbacks: { label: c => ` ${c.parsed.y} mensajes` } } },
+      scales: {
+        x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 9 }, maxRotation: 0, autoSkip: true } },
+        y: { grid: { color: C.gridline }, border: { display: false }, ticks: { precision: 0, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderChartSegmentos(lista) {
+  const ctx = document.getElementById('chart-segmentos');
+  const leyenda = document.getElementById('leyenda-segmentos');
+  if (chartSegmentos) chartSegmentos.destroy();
+  if (!lista || lista.length === 0) { leyenda.innerHTML = `<p class="text-xs" style="color:var(--ink-faint)">Sin usuarios</p>`; return; }
+
+  const labels = lista.map(s => etiquetaSegmento(s.segmento));
+  const data = lista.map(s => s.cantidad);
+  const colores = labels.map((_, i) => PALETA[i % PALETA.length]);
+
+  chartSegmentos = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colores, borderWidth: 3, borderColor: '#fff', hoverOffset: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: baseTooltip() } }
+  });
+
+  leyenda.innerHTML = labels.map((l, i) => `<span class="flex items-center gap-1.5" style="color:var(--ink-soft)"><span class="badge-dot" style="background:${colores[i]}"></span>${l} <b class="font-num" style="color:var(--ink)">${data[i]}</b></span>`).join('');
+}
+
+/* =======================================================
+   IA: aceptación de recomendaciones + feedback
+======================================================= */
+function renderEfectividad(ef) {
+  const circunferencia = 2 * Math.PI * 52;
+  const ring = document.getElementById('ring-aceptacion');
+  ring.setAttribute('stroke-dasharray', circunferencia.toFixed(1));
+
+  requestAnimationFrame(() => {
+    const offset = circunferencia - (circunferencia * (ef.tasa_aceptacion / 100));
+    ring.style.strokeDashoffset = offset.toFixed(1);
+  });
+
+  animarNumero(document.getElementById('pct-aceptacion'), ef.tasa_aceptacion, false, '', '%');
+  document.getElementById('rec-aceptadas').textContent = ef.aceptadas;
+  document.getElementById('rec-total').textContent = ef.total_recomendaciones;
+  document.getElementById('rec-score').textContent = ef.score_promedio;
+}
+
+function renderFeedback(fb) {
+  animarNumero(document.getElementById('rating-promedio'), fb.promedio || 0, true);
+  document.getElementById('rating-total').textContent = fb.total_respuestas || 0;
+
+  const llenas = Math.round(fb.promedio || 0);
+  document.getElementById('rating-estrellas').innerHTML =
+    '★★★★★'.split('').map((_, i) => i < llenas ? '<span>★</span>' : '<span style="color:rgba(28,16,36,0.12)">★</span>').join('');
+
+  const max = Math.max(...fb.distribucion.map(d => d.cantidad), 1);
+  document.getElementById('rating-bars').innerHTML = fb.distribucion.slice().reverse().map(d => `
+    <div class="flex items-center gap-2.5 text-xs">
+      <span class="w-9 shrink-0 font-medium" style="color:var(--ink-soft)">${d.estrellas} ★</span>
+      <div class="bar-track h-2.5 flex-1">
+        <div class="bar-fill-amarillo h-2.5" style="width:0%" data-w="${(d.cantidad/max)*100}"></div>
+      </div>
+      <span class="w-6 text-right shrink-0 font-num" style="color:var(--ink-faint)">${d.cantidad}</span>
+    </div>
+  `).join('');
+
+  requestAnimationFrame(() => {
+    document.querySelectorAll('#rating-bars .bar-fill-amarillo').forEach(b => b.style.width = b.dataset.w + '%');
+  });
+}
+
+/* =======================================================
+   CARGA PRINCIPAL
+======================================================= */
+async function cargarDashboard() {
+  const icon = document.getElementById('refresh-icon');
+  icon.classList.add('animate-spin');
+  setConexion(false, 'Conectando…');
+
+  try {
+    const res = await fetch(ENDPOINT);
+    if (!res.ok) throw new Error(`El servidor respondió con estado ${res.status}`);
+    const data = await res.json();
+
+    clearError();
+    setConexion(true, 'Backend conectado');
+
+    renderKPIs(data.resumen || {});
+    renderVentaKPIs(data.ticket_promedio || { total_vendido:0, ticket_promedio:0, pedido_maximo:0, total_pedidos:0 });
+    renderRankingComprados(data.productos_mas_comprados || []);
+    renderChartCategorias(data.ventas_por_categoria || []);
+    renderStockBajo(data.productos_stock_bajo || []);
+
+    renderChartVentas(data.pedidos_por_dia || []);
+    renderChartEstado(data.estado_pedidos || []);
+
+    renderChartMensajes(data.mensajes_por_dia || []);
+    renderIntents(data.intents_frecuentes || []);
+    renderChartHoras(data.actividad_por_hora || []);
+    renderRankingConsultados(data.productos_mas_consultados || []);
+
+    renderChartSegmentos(data.segmentos_usuarios || []);
+    renderTopClientes(data.top_clientes || []);
+
+    renderFunnel(data.funnel_conversion || []);
+    renderEfectividad(data.efectividad_recomendaciones || { total_recomendaciones:0, aceptadas:0, tasa_aceptacion:0, score_promedio:0 });
+    renderFeedback(data.feedback || { promedio: 0, total_respuestas: 0, distribucion: [] });
+
+    document.getElementById('last-update').textContent = 'Última actualización: ' + new Date().toLocaleTimeString('es-PE');
+
+  } catch (err) {
+    setConexion(false, 'Sin conexión');
+    setError(`${err.message}. Verifica que el backend Flask esté corriendo en ${API_BASE} y que CORS esté habilitado.`);
+  } finally {
+    icon.classList.remove('animate-spin');
+  }
+}
+
+document.getElementById('btn-refresh').addEventListener('click', cargarDashboard);
+initNav();
+cargarDashboard();
+setInterval(cargarDashboard, 60000);
+</script>
+
+
+  <!-- ======================= ADMIN ======================= -->
+  <section id="admin" class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-2xl font-extrabold tracking-tight" style="color:var(--ink)">Centro de Administración</h2>
+        <p class="text-sm mt-1" style="color:var(--ink-faint)">Gestión operativa del catálogo, inventario, promociones y configuración del sistema.</p>
+      </div>
+      <span class="text-xs font-semibold px-3 py-1.5 rounded-full" style="background:rgba(91,42,134,0.1);color:var(--morado)">Acceso Restringido</span>
+    </div>
+
+    <!-- TABS -->
+    <div class="flex gap-2 flex-wrap" id="admin-tabs">
+      <button class="admin-tab active-tab px-4 py-2 rounded-full text-sm font-semibold transition" data-tab="productos" onclick="switchAdminTab('productos')">Productos</button>
+      <button class="admin-tab px-4 py-2 rounded-full text-sm font-semibold transition" data-tab="categorias" onclick="switchAdminTab('categorias')">🏷Categorías</button>
+      <button class="admin-tab px-4 py-2 rounded-full text-sm font-semibold transition" data-tab="stock" onclick="switchAdminTab('stock')">Stock</button>
+      <button class="admin-tab px-4 py-2 rounded-full text-sm font-semibold transition" data-tab="promociones" onclick="switchAdminTab('promociones')">Promociones</button>
+      <button class="admin-tab px-4 py-2 rounded-full text-sm font-semibold transition" data-tab="chatbot" onclick="switchAdminTab('chatbot')">Chatbot IA</button>
+      <button class="admin-tab px-4 py-2 rounded-full text-sm font-semibold transition" data-tab="config" onclick="switchAdminTab('config')">⚙Configuración</button>
+    </div>
+
+    <!-- TAB PRODUCTOS -->
+    <div id="tab-productos" class="admin-panel space-y-4">
+      <div class="card p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <h3 class="font-bold text-base" style="color:var(--ink)">Catálogo de Productos</h3>
+          <button onclick="abrirModalProducto()" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition active:scale-95" style="background:var(--morado)">＋ Agregar Producto</button>
+        </div>
+        <div class="flex gap-2">
+          <input id="buscar-producto" type="text" placeholder="Buscar producto..." oninput="filtrarProductos()" class="flex-1 px-4 py-2 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)">
+          <select id="filtro-cat" onchange="filtrarProductos()" class="px-3 py-2 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)">
+            <option value="">Todas las categorías</option>
+          </select>
+        </div>
+        <div class="overflow-x-auto rounded-xl" style="border:1px solid var(--line)">
+          <table class="w-full text-sm">
+            <thead><tr style="background:var(--bg);color:var(--ink-soft)">
+              <th class="px-4 py-3 text-left font-semibold">Producto</th>
+              <th class="px-4 py-3 text-left font-semibold">Categoría</th>
+              <th class="px-4 py-3 text-right font-semibold">Precio</th>
+              <th class="px-4 py-3 text-right font-semibold">Stock</th>
+              <th class="px-4 py-3 text-center font-semibold">Estado</th>
+              <th class="px-4 py-3 text-center font-semibold">Acciones</th>
+            </tr></thead>
+            <tbody id="tabla-productos"></tbody>
+          </table>
+        </div>
+        <p class="text-xs" style="color:var(--ink-faint)" id="productos-count"></p>
+      </div>
+    </div>
+
+    <!-- TAB CATEGORIAS -->
+    <div id="tab-categorias" class="admin-panel hidden space-y-4">
+      <div class="card p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-base" style="color:var(--ink)">Categorías</h3>
+          <button onclick="agregarCategoria()" class="px-4 py-2 rounded-xl text-sm font-semibold text-white" style="background:var(--morado)">＋ Nueva Categoría</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="lista-categorias"></div>
+      </div>
+    </div>
+
+    <!-- TAB STOCK -->
+    <div id="tab-stock" class="admin-panel hidden space-y-4">
+      <div class="card p-5 space-y-4">
+        <h3 class="font-bold text-base" style="color:var(--ink)">Gestión de Stock</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="card card-kpi p-4 text-center rounded-2xl"><div class="text-2xl font-extrabold font-num" style="color:var(--morado)" id="stock-total">—</div><div class="text-xs mt-1" style="color:var(--ink-faint)">Total unidades</div></div>
+          <div class="card card-kpi p-4 text-center rounded-2xl"><div class="text-2xl font-extrabold font-num" style="color:#E0455A" id="stock-critico-n">—</div><div class="text-xs mt-1" style="color:var(--ink-faint)">Stock crítico</div></div>
+          <div class="card card-kpi p-4 text-center rounded-2xl"><div class="text-2xl font-extrabold font-num" style="color:var(--amarillo)" id="stock-bajo-n">—</div><div class="text-xs mt-1" style="color:var(--ink-faint)">Stock bajo</div></div>
+          <div class="card card-kpi p-4 text-center rounded-2xl"><div class="text-2xl font-extrabold font-num" style="color:#22C55E" id="stock-ok-n">—</div><div class="text-xs mt-1" style="color:var(--ink-faint)">Stock OK</div></div>
+        </div>
+        <div class="overflow-x-auto rounded-xl" style="border:1px solid var(--line)">
+          <table class="w-full text-sm">
+            <thead><tr style="background:var(--bg);color:var(--ink-soft)">
+              <th class="px-4 py-3 text-left font-semibold">Producto</th>
+              <th class="px-4 py-3 text-right font-semibold">Stock Actual</th>
+              <th class="px-4 py-3 text-right font-semibold">Mín. Recomendado</th>
+              <th class="px-4 py-3 text-center font-semibold">Estado</th>
+              <th class="px-4 py-3 text-center font-semibold">Ajustar</th>
+            </tr></thead>
+            <tbody id="tabla-stock"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB PROMOCIONES -->
+    <div id="tab-promociones" class="admin-panel hidden space-y-4">
+      <div class="card p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-base" style="color:var(--ink)">Promociones</h3>
+          <button onclick="agregarPromocion()" class="px-4 py-2 rounded-xl text-sm font-semibold text-white" style="background:var(--morado)">＋ Nueva Promo</button>
+        </div>
+        <div class="space-y-3" id="lista-promociones"></div>
+      </div>
+    </div>
+
+    <!-- TAB CHATBOT -->
+    <div id="tab-chatbot" class="admin-panel hidden space-y-4">
+      <div class="card p-5 space-y-4">
+        <h3 class="font-bold text-base" style="color:var(--ink)">Configuración del Chatbot IA</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="block text-xs font-semibold mb-1" style="color:var(--ink-soft)">Nombre del Bot</label><input type="text" id="cfg-nombre-bot" value="Tambot" class="w-full px-4 py-2.5 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)"></div>
+          <div><label class="block text-xs font-semibold mb-1" style="color:var(--ink-soft)">Idioma</label><select id="cfg-idioma" class="w-full px-4 py-2.5 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)"><option>Español</option><option>Inglés</option></select></div>
+          <div class="sm:col-span-2"><label class="block text-xs font-semibold mb-1" style="color:var(--ink-soft)">Mensaje de bienvenida</label><textarea id="cfg-bienvenida" rows="2" class="w-full px-4 py-2.5 rounded-xl text-sm border resize-none" style="border-color:var(--line);background:var(--bg)">¡Hola! Soy Tambot, tu asistente de compras. ¿En qué te ayudo hoy?</textarea></div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold mb-2" style="color:var(--ink-soft)">Intenciones activas</label>
+            <div class="flex flex-wrap gap-2" id="intenciones-lista"></div>
+          </div>
+        </div>
+        <div class="flex gap-3 pt-1">
+          <button onclick="guardarConfigBot()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white" style="background:var(--morado)">Guardar</button>
+          <button onclick="resetConfigBot()" class="px-5 py-2.5 rounded-xl text-sm font-semibold" style="background:var(--bg);color:var(--ink-soft)">Restaurar</button>
+        </div>
+        <div id="cfg-feedback" class="hidden text-sm font-medium px-4 py-2.5 rounded-xl" style="background:rgba(91,42,134,0.08);color:var(--morado)"></div>
+      </div>
+      <div class="card p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-base" style="color:var(--ink)">Respuestas Predefinidas</h3>
+          <button onclick="agregarRespuesta()" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-white" style="background:var(--morado)">＋ Agregar</button>
+        </div>
+        <div class="space-y-2" id="respuestas-lista"></div>
+      </div>
+    </div>
+
+    <!-- TAB CONFIG -->
+    <div id="tab-config" class="admin-panel hidden space-y-4">
+      <div class="card p-5 space-y-5">
+        <h3 class="font-bold text-base" style="color:var(--ink)">Configuración General</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div><label class="text-xs font-semibold block mb-1" style="color:var(--ink-soft)">URL del Backend (Flask)</label><input type="text" id="cfg-url-api" value="http://localhost:5000" class="w-full px-4 py-2.5 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)"></div>
+          <div><label class="text-xs font-semibold block mb-1" style="color:var(--ink-soft)">Intervalo actualización (seg)</label><input type="number" id="cfg-intervalo" value="60" class="w-full px-4 py-2.5 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)"></div>
+          <div><label class="text-xs font-semibold block mb-1" style="color:var(--ink-soft)">Stock mínimo alerta</label><input type="number" id="cfg-stock-min" value="10" class="w-full px-4 py-2.5 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)"></div>
+          <div><label class="text-xs font-semibold block mb-1" style="color:var(--ink-soft)">Moneda</label><select id="cfg-moneda" class="w-full px-4 py-2.5 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)"><option>S/ (Sol Peruano)</option><option>$ (Dólar)</option></select></div>
+        </div>
+        <div><label class="text-sm font-semibold block mb-2" style="color:var(--ink)">Notificaciones</label>
+          <div class="flex gap-4 flex-wrap text-sm">
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="w-4 h-4 accent-purple-700"> Stock bajo</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="w-4 h-4 accent-purple-700"> Reporte diario</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-purple-700"> Errores chatbot</label>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button onclick="guardarConfig()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white" style="background:var(--morado)">Guardar configuración</button>
+          <button onclick="exportarDatos()" class="px-5 py-2.5 rounded-xl text-sm font-semibold" style="background:var(--bg)">⬇️ Exportar JSON</button>
+        </div>
+        <div id="config-feedback" class="hidden text-sm font-medium px-4 py-2.5 rounded-xl" style="background:rgba(91,42,134,0.08);color:var(--morado)"></div>
+      </div>
+      <div class="card p-5 space-y-3" style="border-left:3px solid #E0455A">
+        <h3 class="font-bold text-base" style="color:#E0455A">Zona de Administración Avanzada</h3>
+        <p class="text-sm" style="color:var(--ink-soft)">Estas acciones son irreversibles.</p>
+        <div class="flex gap-3 flex-wrap">
+          <button onclick="limpiarHistorial()" class="px-4 py-2 rounded-xl text-sm font-semibold text-white" style="background:#E0455A">Limpiar historial de chat</button>
+          <button onclick="resetearDatos()" class="px-4 py-2 rounded-xl text-sm font-semibold" style="background:var(--bg);color:#E0455A;border:1px solid #E0455A">Restablecer sistema</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL PRODUCTO -->
+  <div id="modal-producto" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" style="background:rgba(28,16,36,0.45);backdrop-filter:blur(4px)">
+    <div class="card p-6 w-full max-w-md space-y-4 rounded-3xl" style="max-height:90vh;overflow-y:auto">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-base" id="modal-titulo">Agregar Producto</h3>
+        <button onclick="cerrarModal()" class="text-2xl leading-none" style="color:var(--ink-faint)">✕</button>
+      </div>
+      <div class="space-y-3">
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--ink-soft)">Nombre</label><input id="mp-nombre" type="text" placeholder="Ej: Agua San Luis 500ml" class="w-full px-4 py-2.5 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-semibold mb-1" style="color:var(--ink-soft)">Precio (S/)</label><input id="mp-precio" type="number" step="0.10" class="w-full px-4 py-2.5 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)"></div>
+          <div><label class="block text-xs font-semibold mb-1" style="color:var(--ink-soft)">Stock</label><input id="mp-stock" type="number" class="w-full px-4 py-2.5 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)"></div>
+        </div>
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--ink-soft)">Categoría</label><select id="mp-categoria" class="w-full px-4 py-2.5 rounded-xl text-sm border" style="border-color:var(--line);background:var(--bg)"></select></div>
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--ink-soft)">Descripción</label><textarea id="mp-descripcion" rows="2" class="w-full px-4 py-2.5 rounded-xl text-sm border resize-none" style="border-color:var(--line);background:var(--bg)"></textarea></div>
+        <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" id="mp-activo" checked class="w-4 h-4 accent-purple-700"> Producto activo</label>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="guardarProducto()" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white" style="background:var(--morado)">Guardar</button>
+        <button onclick="cerrarModal()" class="flex-1 py-2.5 rounded-xl text-sm font-semibold" style="background:var(--bg);color:var(--ink-soft)">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+<style>
+  .admin-tab { background:var(--bg); color:var(--ink-soft); }
+  .admin-tab:hover { background:rgba(91,42,134,0.07); color:var(--ink); }
+  .active-tab { background:var(--morado) !important; color:white !important; }
+  .tag-intent { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600; cursor:pointer; }
+  .tag-intent.on { background:rgba(91,42,134,0.12); color:var(--morado); }
+  .tag-intent.off { background:var(--bg); color:var(--ink-faint); text-decoration:line-through; }
+</style>
+
+<script>
+// ===================== ADMIN DATA =====================
+let adminProductos = [
+  {id:1,nombre:'Agua San Luis 625ml',categoria:'Bebidas',precio:1.5,stock:120,activo:true},
+  {id:2,nombre:'Inca Kola 400ml',categoria:'Bebidas',precio:2.0,stock:85,activo:true},
+  {id:3,nombre:'Sublime 32g',categoria:'Snacks',precio:1.5,stock:200,activo:true},
+  {id:4,nombre:'Pan de molde Bimbo',categoria:'Panadería',precio:5.9,stock:4,activo:true},
+  {id:5,nombre:'Leche Gloria 1L',categoria:'Lácteos',precio:4.5,stock:60,activo:true},
+  {id:6,nombre:'Yogurt Laive 1L',categoria:'Lácteos',precio:6.5,stock:2,activo:false},
+  {id:7,nombre:'Papas Lays 130g',categoria:'Snacks',precio:4.0,stock:95,activo:true},
+  {id:8,nombre:'Café Nescafé 200g',categoria:'Abarrotes',precio:18.0,stock:30,activo:true},
+];
+let adminCategorias = ['Bebidas','Snacks','Panadería','Lácteos','Abarrotes','Higiene','Licores','Helados'];
+let editandoId = null;
+const intenciones = ['buscar_producto','consultar_precio','ver_promociones','agregar_carrito','ver_stock','recomendar','saludar','despedir','consultar_pedido'];
+let intencionesActivas = new Set(intenciones);
+const promocionesDemo = [
+  {id:1,nombre:'2x1 en Bebidas',desc:'Lleva 2 bebidas y paga 1',vigencia:'30/06/2026',activa:true},
+  {id:2,nombre:'Descuento 20% Snacks',desc:'20% en toda la categoría Snacks',vigencia:'25/06/2026',activa:true},
+  {id:3,nombre:'Combo Desayuno',desc:'Pan + Leche + Café a S/10.00',vigencia:'28/06/2026',activa:false},
+];
+const respuestasDemo = [
+  {trigger:'hola',respuesta:'¡Hola! Bienvenido a Tambo. ¿En qué te puedo ayudar?'},
+  {trigger:'precio',respuesta:'Puedo consultarte el precio de cualquier producto. ¿Qué producto buscas?'},
+  {trigger:'no disponible',respuesta:'Lo sentimos, ese producto no está disponible. ¿Puedo sugerirte algo similar?'},
+];
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.add('hidden'));
+  document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active-tab'));
+  document.getElementById('tab-'+tab).classList.remove('hidden');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active-tab');
+  if(tab==='productos') renderProductos();
+  if(tab==='categorias') renderCategorias();
+  if(tab==='stock') renderStock();
+  if(tab==='promociones') renderPromociones();
+  if(tab==='chatbot') renderChatbot();
+}
+
+function renderProductos() {
+  const busq=(document.getElementById('buscar-producto')?.value||'').toLowerCase();
+  const cat=document.getElementById('filtro-cat')?.value||'';
+  const sel=document.getElementById('mp-categoria');
+  if(sel) sel.innerHTML=adminCategorias.map(c=>`<option>${c}</option>`).join('');
+  const fcat=document.getElementById('filtro-cat');
+  if(fcat&&fcat.children.length<=1) adminCategorias.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;fcat.appendChild(o);});
+  const filtrados=adminProductos.filter(p=>(!busq||p.nombre.toLowerCase().includes(busq))&&(!cat||p.categoria===cat));
+  document.getElementById('tabla-productos').innerHTML=filtrados.map(p=>{
+    const sc=p.stock<=5?'#E0455A':p.stock<=15?'#F59E0B':'#22C55E';
+    return `<tr style="border-top:1px solid var(--line)">
+      <td class="px-4 py-3 font-medium">${p.nombre}</td>
+      <td class="px-4 py-3 text-sm" style="color:var(--ink-soft)">${p.categoria}</td>
+      <td class="px-4 py-3 text-right font-num font-semibold">S/ ${p.precio.toFixed(2)}</td>
+      <td class="px-4 py-3 text-right font-num font-bold" style="color:${sc}">${p.stock}</td>
+      <td class="px-4 py-3 text-center"><span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background:${p.activo?'rgba(34,197,94,0.1)':'rgba(224,69,90,0.1)'};color:${p.activo?'#16A34A':'#E0455A'}">${p.activo?'Activo':'Inactivo'}</span></td>
+      <td class="px-4 py-3 text-center"><div class="flex gap-1 justify-center">
+        <button onclick="editarProducto(${p.id})" class="px-2.5 py-1 rounded-lg text-xs font-semibold" style="background:rgba(91,42,134,0.1);color:var(--morado)">Editar</button>
+        <button onclick="eliminarProducto(${p.id})" class="px-2.5 py-1 rounded-lg text-xs font-semibold" style="background:rgba(224,69,90,0.1);color:#E0455A">Eliminar</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('productos-count').textContent=`${filtrados.length} producto(s) encontrado(s)`;
+}
+
+function filtrarProductos(){renderProductos();}
+function abrirModalProducto(id=null){
+  editandoId=id;
+  document.getElementById('modal-titulo').textContent=id?'Editar Producto':'Agregar Producto';
+  const sel=document.getElementById('mp-categoria');
+  sel.innerHTML=adminCategorias.map(c=>`<option>${c}</option>`).join('');
+  if(id){const p=adminProductos.find(x=>x.id===id);document.getElementById('mp-nombre').value=p.nombre;document.getElementById('mp-precio').value=p.precio;document.getElementById('mp-stock').value=p.stock;document.getElementById('mp-activo').checked=p.activo;setTimeout(()=>{sel.value=p.categoria;},10);}
+  else{['mp-nombre','mp-precio','mp-stock','mp-descripcion'].forEach(i=>document.getElementById(i).value='');document.getElementById('mp-activo').checked=true;}
+  document.getElementById('modal-producto').classList.remove('hidden');
+}
+function cerrarModal(){document.getElementById('modal-producto').classList.add('hidden');}
+function guardarProducto(){
+  const nombre=document.getElementById('mp-nombre').value.trim();
+  if(!nombre){alert('El nombre es requerido');return;}
+  const prod={id:editandoId||Date.now(),nombre,precio:parseFloat(document.getElementById('mp-precio').value)||0,stock:parseInt(document.getElementById('mp-stock').value)||0,categoria:document.getElementById('mp-categoria').value,activo:document.getElementById('mp-activo').checked};
+  if(editandoId){const idx=adminProductos.findIndex(p=>p.id===editandoId);adminProductos[idx]=prod;}else{adminProductos.push(prod);}
+  cerrarModal();renderProductos();
+}
+function editarProducto(id){abrirModalProducto(id);}
+function eliminarProducto(id){if(!confirm('¿Eliminar este producto?'))return;adminProductos=adminProductos.filter(p=>p.id!==id);renderProductos();}
+
+function renderCategorias(){
+  document.getElementById('lista-categorias').innerHTML=adminCategorias.map((c,i)=>`
+    <div class="card p-4 rounded-2xl flex items-center justify-between">
+      <div><div class="font-semibold text-sm">${c}</div><div class="text-xs mt-0.5" style="color:var(--ink-faint)">${adminProductos.filter(p=>p.categoria===c).length} productos</div></div>
+      <div class="flex gap-2">
+        <button onclick="renombrarCategoria(${i})" class="text-xs px-2.5 py-1 rounded-lg font-semibold" style="background:rgba(91,42,134,0.1);color:var(--morado)">Renombrar</button>
+        <button onclick="eliminarCategoria(${i})" class="text-xs px-2.5 py-1 rounded-lg font-semibold" style="background:rgba(224,69,90,0.1);color:#E0455A">✕</button>
+      </div>
+    </div>`).join('');
+}
+function agregarCategoria(){const n=prompt('Nombre de la nueva categoría:');if(n&&n.trim()){adminCategorias.push(n.trim());renderCategorias();}}
+function renombrarCategoria(i){const n=prompt('Nuevo nombre:',adminCategorias[i]);if(n&&n.trim()){adminCategorias[i]=n.trim();renderCategorias();}}
+function eliminarCategoria(i){const cat=adminCategorias[i];if(adminProductos.some(p=>p.categoria===cat)){alert('No se puede eliminar: hay productos en esta categoría.');return;}if(confirm(`¿Eliminar categoría "${cat}"?`)){adminCategorias.splice(i,1);renderCategorias();}}
+
+function renderStock(){
+  const min=parseInt(document.getElementById('cfg-stock-min')?.value||10);
+  const total=adminProductos.reduce((a,p)=>a+p.stock,0);
+  document.getElementById('stock-total').textContent=total;
+  document.getElementById('stock-critico-n').textContent=adminProductos.filter(p=>p.stock<=2).length;
+  document.getElementById('stock-bajo-n').textContent=adminProductos.filter(p=>p.stock>2&&p.stock<=min).length;
+  document.getElementById('stock-ok-n').textContent=adminProductos.filter(p=>p.stock>min).length;
+  document.getElementById('tabla-stock').innerHTML=adminProductos.map(p=>{
+    const st=p.stock<=2?{l:'Crítico',c:'#E0455A'}:p.stock<=min?{l:'Bajo',c:'#F59E0B'}:{l:'OK',c:'#22C55E'};
+    return `<tr style="border-top:1px solid var(--line)">
+      <td class="px-4 py-3 font-medium">${p.nombre}</td>
+      <td class="px-4 py-3 text-right font-num font-bold" style="color:${st.c}">${p.stock}</td>
+      <td class="px-4 py-3 text-right text-sm" style="color:var(--ink-faint)">${min}</td>
+      <td class="px-4 py-3 text-center"><span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background:${st.c}22;color:${st.c}">${st.l}</span></td>
+      <td class="px-4 py-3 text-center"><div class="flex gap-1 justify-center">
+        <button onclick="ajustarStock(${p.id},-1)" class="w-7 h-7 rounded-lg font-bold text-sm flex items-center justify-center" style="background:rgba(224,69,90,0.1);color:#E0455A">−</button>
+        <button onclick="ajustarStock(${p.id},10)" class="w-7 h-7 rounded-lg font-bold text-sm flex items-center justify-center" style="background:rgba(34,197,94,0.1);color:#16A34A">+</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+function ajustarStock(id,delta){const p=adminProductos.find(x=>x.id===id);if(p){p.stock=Math.max(0,p.stock+delta);renderStock();}}
+
+function renderPromociones(){
+  document.getElementById('lista-promociones').innerHTML=promocionesDemo.map((p,i)=>`
+    <div class="card p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+      <div class="flex-1">
+        <div class="flex items-center gap-2 flex-wrap"><span class="font-semibold text-sm">${p.nombre}</span>
+          <span class="text-xs px-2 py-0.5 rounded-full font-semibold" style="background:${p.activa?'rgba(34,197,94,0.1)':'rgba(224,69,90,0.1)'};color:${p.activa?'#16A34A':'#E0455A'}">${p.activa?'Activa':'Inactiva'}</span></div>
+        <p class="text-xs mt-1" style="color:var(--ink-soft)">${p.desc}</p>
+        <p class="text-xs mt-1" style="color:var(--ink-faint)">Vence: ${p.vigencia}</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="togglePromo(${i})" class="text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:rgba(91,42,134,0.1);color:var(--morado)">${p.activa?'Desactivar':'Activar'}</button>
+        <button onclick="eliminarPromo(${i})" class="text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:rgba(224,69,90,0.1);color:#E0455A">Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+function agregarPromocion(){const n=prompt('Nombre:');if(!n)return;const d=prompt('Descripción:')||'';const v=prompt('Vigencia (DD/MM/YYYY):')||'--/--/----';promocionesDemo.push({id:Date.now(),nombre:n,desc:d,vigencia:v,activa:true});renderPromociones();}
+function togglePromo(i){promocionesDemo[i].activa=!promocionesDemo[i].activa;renderPromociones();}
+function eliminarPromo(i){if(confirm('¿Eliminar?')){promocionesDemo.splice(i,1);renderPromociones();}}
+
+function renderChatbot(){
+  document.getElementById('intenciones-lista').innerHTML=intenciones.map(intent=>`
+    <span class="tag-intent ${intencionesActivas.has(intent)?'on':'off'}" onclick="toggleIntent('${intent}')">${intent.replace(/_/g,' ')} ${intencionesActivas.has(intent)?'✓':'✕'}</span>`).join('');
+  document.getElementById('respuestas-lista').innerHTML=respuestasDemo.map((r,i)=>`
+    <div class="flex gap-3 p-3 rounded-xl items-start" style="background:var(--bg)">
+      <div class="flex-1 text-sm"><span class="font-semibold" style="color:var(--morado)">"${r.trigger}"</span> <span style="color:var(--ink-soft)">→ ${r.respuesta}</span></div>
+      <button onclick="eliminarRespuesta(${i})" class="text-xs shrink-0" style="color:#E0455A">✕</button>
+    </div>`).join('');
+}
+function toggleIntent(intent){if(intencionesActivas.has(intent))intencionesActivas.delete(intent);else intencionesActivas.add(intent);renderChatbot();}
+function guardarConfigBot(){const fb=document.getElementById('cfg-feedback');fb.textContent='Configuración actualizada correctamente.';fb.classList.remove('hidden');setTimeout(()=>fb.classList.add('hidden'),3000);}
+function resetConfigBot(){document.getElementById('cfg-nombre-bot').value='Tambot';intencionesActivas=new Set(intenciones);renderChatbot();}
+function agregarRespuesta(){const t=prompt('Frase disparadora:');if(!t)return;const r=prompt('Respuesta:');if(!r)return;respuestasDemo.push({trigger:t,respuesta:r});renderChatbot();}
+function eliminarRespuesta(i){respuestasDemo.splice(i,1);renderChatbot();}
+
+function guardarConfig(){const fb=document.getElementById('config-feedback');fb.textContent='Configuración actualizada correctamente.';fb.classList.remove('hidden');setTimeout(()=>fb.classList.add('hidden'),3000);}
+function exportarDatos(){const datos={productos:adminProductos,categorias:adminCategorias,timestamp:new Date().toISOString()};const blob=new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='tambot-datos.json';a.click();URL.revokeObjectURL(url);}
+function limpiarHistorial(){if(confirm('¿Limpiar todo el historial?'))alert('Historial eliminado correctamente.');}
+function resetearDatos(){if(confirm('¿Resetear todos los datos?'))location.reload();}
+
+document.addEventListener('DOMContentLoaded',()=>{renderProductos();});
+</script>
+
+</body>
+</html>
