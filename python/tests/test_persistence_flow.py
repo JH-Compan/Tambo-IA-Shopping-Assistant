@@ -170,6 +170,12 @@ class ChatbotServicePersistenceTestCase(unittest.TestCase):
 
     def setUp(self):
         self.service = ChatbotService()
+        self.service.availability_service.validate_item_availability = MagicMock(return_value={
+            "available": True,
+            "reason_code": None,
+            "reason": None,
+            "details": {"available_quantity": 10, "requested_quantity": 1, "unavailable_products": []}
+        })
         self.service.obtener_contexto_catalogo = MagicMock(return_value=([], []))
         self.service.nlp_orchestrator.orchestrate = MagicMock(return_value={
             "analysis_result": {
@@ -451,6 +457,10 @@ class RecomendacionServiceContextTestCase(unittest.TestCase):
             {"id": "PROD2", "name": "Dos", "brand": "A", "price": 6, "stock": 3, "is_active": True, "category_id": "C1"},
         ])
         self.service.producto_repository.listar_categorias = MagicMock(return_value=[{"id": "C1", "name": "Bebidas"}])
+        self.service.availability_service.filter_products = MagicMock(side_effect=lambda items, quantity=1: [
+            item for item in (items or []) if item.get("id") != "PROD1"
+        ] if items else [])
+        self.service.availability_service.filtrar_promociones_disponibles = MagicMock(side_effect=lambda items, user_id=None, quantity=1: items or [])
 
     def test_dame_otra_opcion_no_retorna_producto_excluido(self):
         result = self.service.recomendar_productos(
@@ -466,11 +476,31 @@ class RecomendacionServiceContextTestCase(unittest.TestCase):
         returned_ids = [item["id"] for item in result["items"]]
         self.assertNotIn("PROD1", returned_ids)
 
+    def test_producto_no_disponible_no_aparece_en_items_finales(self):
+        result = self.service.recomendar_productos(
+            mensaje="recomiendame algo",
+            analysis={
+                "intent": {"value": "pedir_recomendacion"},
+                "entities": {},
+                "preferences": [],
+                "exclusions": {"products": [], "brands": [], "categories": []},
+                "metadata": {"excluded_item_ids": [], "category_candidates": []}
+            }
+        )
+        returned_ids = [item["id"] for item in result["items"]]
+        self.assertEqual(returned_ids, ["PROD2"])
+
 
 class ChatbotServiceContextActionTestCase(unittest.TestCase):
 
     def setUp(self):
         self.service = ChatbotService()
+        self.service.availability_service.validate_item_availability = MagicMock(return_value={
+            "available": True,
+            "reason_code": None,
+            "reason": None,
+            "details": {"available_quantity": 10, "requested_quantity": 1, "unavailable_products": []}
+        })
         self.service.obtener_contexto_catalogo = MagicMock(return_value=([], []))
         self.service.nlp_orchestrator.orchestrate = MagicMock(return_value={
             "analysis_result": {"intent": "consulta_general", "confidence": 0.8, "method": "rules+catalog", "entities": {}},
@@ -520,6 +550,28 @@ class ChatbotServiceContextActionTestCase(unittest.TestCase):
     def test_was_selected_se_actualiza(self):
         self.service.procesar_mensaje(user_id="USR1", mensaje="Agrega el primero")
         self.service.recomendacion_service.marcar_recomendacion_seleccionada.assert_called_once_with("REC1")
+
+    def test_item_no_disponible_no_devuelve_add_to_cart_y_entrega_alternativas(self):
+        self.service.availability_service.validate_item_availability.return_value = {
+            "available": False,
+            "reason_code": "insufficient_stock",
+            "reason": "Esta opcion ya no esta disponible.",
+            "details": {"available_quantity": 0, "requested_quantity": 1, "unavailable_products": []}
+        }
+        self.service.recomendacion_service.recomendar_productos = MagicMock(return_value={
+            "tipo": "productos",
+            "items": [{"id": "PROD2", "name": "B", "price": 6}],
+            "razon": "alternativas"
+        })
+
+        result = self.service.procesar_mensaje(user_id="USR1", mensaje="Agrega el primero")
+
+        self.assertIsNone(result["client_action"])
+        self.assertEqual([item["id"] for item in result["items"]], ["PROD2"])
+        self.assertNotIn("PROD1", [item["item_id"] for item in result["items"] if "item_id" in item])
+        saved_context = self.service.conversacion_repository.actualizar_context_state.call_args.args[1]
+        self.assertNotIn("PROD1", [item["item_id"] for item in saved_context["last_recommendations"]])
+        self.assertIn("PROD1", saved_context["excluded_item_ids"])
 
 
 if __name__ == "__main__":

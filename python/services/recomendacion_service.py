@@ -1,5 +1,6 @@
 from repositories.producto_repository import ProductoRepository
 from repositories.recomendacion_repository import RecomendacionRepository
+from services.availability_service import AvailabilityService
 
 
 class RecomendacionService:
@@ -7,8 +8,9 @@ class RecomendacionService:
     def __init__(self):
         self.producto_repository = ProductoRepository()
         self.recomendacion_repository = RecomendacionRepository()
+        self.availability_service = AvailabilityService()
 
-    def recomendar_productos(self, mensaje, conversation_id=None, analysis=None):
+    def recomendar_productos(self, mensaje, conversation_id=None, analysis=None, user_id=None):
         texto = str(mensaje or "").lower()
         analysis = analysis or {}
         intent = self._read_intent(analysis)
@@ -37,9 +39,10 @@ class RecomendacionService:
                 brand=brand,
                 product_name=product_name
             )
+            promociones = self.availability_service.filtrar_promociones_disponibles(promociones, user_id=user_id)
             return {
                 "tipo": "promociones",
-                "items": promociones[:5],
+                "items": self.availability_service.filtrar_promociones_disponibles(promociones[:5], user_id=user_id),
                 "razon": "El usuario solicito promociones u ofertas."
             }
 
@@ -64,10 +67,11 @@ class RecomendacionService:
             if intent == "pedir_recomendacion" and "economic" in preferences:
                 productos = sorted(productos, key=lambda item: item.get("price") or 0)
 
+            productos = self.availability_service.filter_products(productos)
             if productos:
                 return {
                     "tipo": "productos",
-                    "items": productos[:5],
+                    "items": self.availability_service.filter_products(productos[:5]),
                     "razon": "Se encontraron productos relacionados con la intención detectada."
                 }
 
@@ -86,7 +90,7 @@ class RecomendacionService:
         )
         return {
             "tipo": "productos",
-            "items": productos[:5],
+            "items": self.availability_service.filter_products(productos[:5]),
             "razon": "No se detecto una categoria especifica; se muestran productos generales."
         }
 
@@ -149,13 +153,11 @@ class RecomendacionService:
         exclusions,
         excluded_item_ids
     ):
-        productos = self.producto_repository.listar_productos(limite=None) or []
+        productos = self.availability_service.filter_products(
+            self.producto_repository.listar_productos(limite=None) or []
+        )
         filtrados = []
         for producto in productos:
-            if not producto.get("is_active", True):
-                continue
-            if (producto.get("stock") or 0) <= 0:
-                continue
             if product_id and producto.get("id") != product_id:
                 continue
             if product_name and product_name.lower() not in str(producto.get("name", "")).lower():

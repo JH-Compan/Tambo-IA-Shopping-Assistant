@@ -26,5 +26,5 @@ def listar_categorias():
 
 @producto_bp.route("/api/promociones", methods=["GET"])
 def listar_promociones():
-    promociones = producto_service.listar_promociones()
+    promociones = producto_service.listar_promociones(user_id=request.args.get("user_id"))
     return jsonify(promociones), 200

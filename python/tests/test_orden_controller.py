@@ -16,7 +16,7 @@ fake_config_supabase_client.supabase = MagicMock()
 
 with patch.dict(sys.modules, {"supabase": fake_supabase, "config.supabase_client": fake_config_supabase_client}):
     from app import crear_app
-    from controllers.orden_controller import supabase
+    from controllers.orden_controller import availability_service, supabase
 
 
 class OrdenControllerTestCase(unittest.TestCase):
@@ -154,6 +154,35 @@ class OrdenControllerTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.get_json()["success"])
         table_mock.assert_called_once_with("chat_conversations")
+
+    @patch.object(availability_service, "evaluate_item")
+    def test_validar_item_carrito_devuelve_no_disponible_con_detalles(self, evaluate_mock):
+        evaluate_mock.return_value = {
+            "available": False,
+            "reason_code": "insufficient_stock",
+            "reason": "Esta promoción ya no está disponible.",
+            "details": {
+                "available_quantity": 0,
+                "requested_quantity": 2,
+                "unavailable_products": [
+                    {"product_id": "PROD1", "required_quantity": 4, "available_stock": 2}
+                ]
+            }
+        }
+
+        response = self.client.post("/api/carrito/validar-item", json={
+            "user_id": "USR1",
+            "item_id": "PROMO1",
+            "item_type": "promotion",
+            "quantity": 2
+        })
+
+        body = response.get_json()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(body["success"])
+        self.assertFalse(body["available"])
+        self.assertEqual(body["reason_code"], "insufficient_stock")
+        self.assertEqual(body["details"]["unavailable_products"][0]["product_id"], "PROD1")
 
 
 if __name__ == "__main__":
