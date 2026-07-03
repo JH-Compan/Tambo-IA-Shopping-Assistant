@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tambot + - Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #F2F2F7;
+  --surface:   #FFFFFF;
+  --surface2:  #F2F2F7;
+  --sep:       rgba(60,60,67,0.18);
+  --sep2:      rgba(60,60,67,0.08);
+  --blue:      #007AFF;
+  --purple:    #5856D6;
+  --green:     #34C759;
+  --red:       #FF3B30;
+  --yellow:    #FFD60A;
+  --orange:    #FF9500;
+  --gray:      #8E8E93;
+  --gray2:     #C7C7CC;
+  --text:      #000000;
+  --text2:     #3C3C43;
+  --text3:     #8E8E93;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  background: #1C1C1E;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ── SHELL ── */
+.app {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.phone {
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
+  max-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+@media (min-height: 700px) and (min-width: 500px) {
+  .phone {
+    max-height: 95vh;
+    border-radius: 44px;
+    box-shadow: 0 0 0 8px #2C2C2E, 0 32px 80px rgba(0,0,0,0.5);
+  }
+}
+
+/* ── HEADER ── */
+.header {
+  background: rgba(242,242,247,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 0.5px solid var(--sep);
+  padding: 12px 16px 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.header-left  { display: flex; align-items: center; gap: 10px; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+.avatar {
+  width: 40px; height: 40px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--purple) 0%, #AF52DE 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--yellow);
+  flex-shrink: 0;
+  letter-spacing: -0.5px;
+}
+.header-name   { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+.header-status {
+  font-size: 12px; color: var(--green); font-weight: 500;
+  display: flex; align-items: center; gap: 4px;
+}
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.user-pill {
+  background: rgba(88,86,214,0.12);
+  color: var(--purple);
+  font-size: 12px; font-weight: 600;
+  padding: 4px 11px; border-radius: 20px;
+  letter-spacing: -0.1px;
+}
+.logout-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,59,48,0.1);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.logout-btn:hover { background: rgba(255,59,48,0.18); }
+.logout-btn svg { width: 15px; height: 15px; fill: none; stroke: var(--red); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── CHAT AREA ── */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  position: relative;
+  background: #e5ddd5; /* 👈 ESTE ES EL VERDADERO COLOR WHATSAPP */
+}
+
+.chat-area::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-image: url("https://i.pinimg.com/474x/b1/fe/e2/b1fee2bca899ad87e5683fd54c113678.jpg");
+  background-repeat: repeat;
+  background-size: 350px;
+
+  
+  pointer-events: none;
+}
+.bubble-wrap,
+.sys-note,
+.typing {
+  position: relative;
+  z-index: 1;
+}
+
+/* SYSTEM NOTE */
+.sys-note {
+  align-self: center;
+  background: rgba(142,142,147,0.15);
+  color: var(--text3);
+  font-size: 11px; font-weight: 500;
+  padding: 4px 12px; border-radius: 10px;
+  margin: 6px 0;
+  letter-spacing: 0.1px;
+}
+
+/* BUBBLES */
+.bubble-wrap        { display: flex; flex-direction: column; margin-bottom: 6px; }
+.bubble-wrap.bot    { align-items: flex-start; }
+.bubble-wrap.user   { align-items: flex-end; }
+
+.bubble {
+  max-width: 82%;
+  padding: 10px 14px;
+  font-size: 14px; line-height: 1.5;
+  letter-spacing: -0.1px;
+}
+.bubble.bot {
+  background: var(--surface);
+  border-radius: 18px 18px 18px 5px;
+  color: var(--text);
+  border: 0.5px solid var(--sep2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.bubble.user {
+  background: var(--blue);
+  border-radius: 18px 18px 5px 18px;
+  color: #FFFFFF;
+}
+.bubble-time { font-size: 10px; color: var(--text3); margin-top: 3px; padding: 0 4px; }
+
+/* QUICK REPLIES */
+.quick-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; max-width: 88%; }
+.quick-btn {
+  background: var(--surface);
+  border: 1px solid var(--blue);
+  color: var(--blue);
+  border-radius: 16px;
+  padding: 5px 12px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: var(--font);
+  transition: all 0.15s;
+  letter-spacing: -0.1px;
+}
+.quick-btn:hover { background: var(--blue); color: #FFFFFF; }
+
+/* PRODUCT CARD */
+.p-card {
+  background: var(--surface);
+  border-radius: 16px;
+  border: 0.5px solid var(--sep2);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  padding: 12px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+.p-card-name { font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; margin-bottom: 2px; }
+.p-card-cat  { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+.p-card-desc { font-size: 12px; color: var(--text2); margin-bottom: 6px; line-height: 1.4; }
+.p-card-footer { display: flex; justify-content: space-between; align-items: center; }
+.p-card-price  { font-size: 16px; font-weight: 700; color: var(--green); letter-spacing: -0.4px; }
+.p-card-stock  {
+  font-size: 11px; font-weight: 500;
+  color: var(--text3);
+  background: var(--surface2);
+  padding: 3px 8px; border-radius: 8px;
+}
+.p-card-btn {
+  width: 100%; margin-top: 10px;
+  background: var(--blue);
+  color: white; border: none;
+  border-radius: 10px; padding: 8px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: var(--font);
+  transition: opacity 0.15s;
+  letter-spacing: -0.2px;
+}
+.p-card-btn:active { opacity: 0.8; }
+.p-card-btn.promo { background: var(--purple); }
+
+/* PROMO CARD */
+.promo-card {
+  background: rgba(255,214,10,0.1);
+  border-radius: 16px;
+  border: 1px solid rgba(255,214,10,0.4);
+  padding: 12px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+.promo-card-name { font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; margin-bottom: 3px; }
+.promo-card-desc { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.promo-badge {
+  font-size: 11px; font-weight: 700;
+  color: #8B6800;
+  background: rgba(255,214,10,0.3);
+  padding: 2px 8px; border-radius: 8px;
+}
+
+/* CART ITEM */
+.cart-item {
+  background: var(--surface);
+  border-radius: 12px;
+  border: 0.5px solid var(--sep2);
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.cart-item-left .name  { font-size: 13px; font-weight: 600; color: var(--text); letter-spacing: -0.2px; }
+.cart-item-left .meta  { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.cart-item-price { font-size: 14px; font-weight: 700; color: var(--green); letter-spacing: -0.3px; }
+
+.cart-total {
+  background: var(--surface);
+  border-radius: 12px;
+  border: 0.5px solid var(--sep2);
+  padding: 11px 14px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 4px;
+}
+.cart-total-label { font-size: 14px; font-weight: 600; color: var(--text); }
+.cart-total-value { font-size: 17px; font-weight: 700; color: var(--green); letter-spacing: -0.5px; }
+
+/* TICKET CARD */
+.ticket-card {
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid rgba(52,199,89,0.3);
+  padding: 16px;
+  text-align: center;
+}
+.ticket-icon { font-size: 36px; margin-bottom: 8px; }
+.ticket-title { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.4px; margin-bottom: 12px; }
+.ticket-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 0.5px solid var(--sep2); font-size: 13px; }
+.ticket-row:last-child { border-bottom: none; }
+.ticket-row .lbl { color: var(--text3); }
+.ticket-row .val { font-weight: 600; color: var(--text); }
+.ticket-thanks { font-size: 13px; color: var(--text3); margin-top: 12px; }
+
+/* ── INPUT BAR ── */
+.input-bar {
+  background: rgba(242,242,247,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 0.5px solid var(--sep);
+  padding: 10px 12px 16px;
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.chat-input {
+  flex: 1;
+  background: var(--surface);
+  border: 0.5px solid var(--sep);
+  border-radius: 22px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-family: var(--font);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+.chat-input:focus { border-color: var(--blue); }
+.chat-input::placeholder { color: var(--text3); }
+.send-btn {
+  width: 36px; height: 36px; flex-shrink: 0;
+  background: var(--blue);
+  border: none; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.send-btn:active { opacity: 0.8; transform: scale(0.94); }
+.send-btn svg { width: 16px; height: 16px; fill: none; stroke: white; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── TYPING INDICATOR ── */
+.typing {
+  display: none;
+  align-self: flex-start;
+  background: var(--surface);
+  border-radius: 18px 18px 18px 5px;
+  border: 0.5px solid var(--sep2);
+  padding: 10px 14px;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.typing.show { display: flex; }
+.typing span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gray2);
+  animation: bounce 1.2s infinite;
+}
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30%           { transform: translateY(-5px); background: var(--gray); }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+<div class="phone">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <div class="avatar">T+</div>
+      <div>
+        <div class="header-name">Tambo+</div>
+        <div class="header-status" id="bot-status-wrap">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="bot-status">conectando...</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-pill" id="user-badge">...</div>
+      <button class="logout-btn" onclick="cerrarSesion()" title="Cerrar sesión">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- CHAT -->
+  <main id="chat-box" class="chat-area">
+    <div class="sys-note">Tambo+ · Flask + Supabase</div>
+  </main>
+
+  <!-- TYPING -->
+  <div class="typing" id="typing-indicator">
+    <span></span><span></span><span></span>
+  </div>
+
+  <!-- INPUT -->
+  <footer class="input-bar">
+    <input
+      id="chat-input"
+      type="text"
+      class="chat-input"
+      placeholder="Escribe un mensaje..."
+      onkeypress="handleKey(event)"
+    />
+    <button class="send-btn" onclick="processMessage()">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </footer>
+
+</div>
+</div>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN
+========================================================= */
+const API_BASE = "";
+
+const USER_ID      = sessionStorage.getItem("tambo_user_id");
+const USER_NAME    = sessionStorage.getItem("tambo_user_name");
+const USER_SEGMENT = sessionStorage.getItem("tambo_user_segment");
+
+if (!USER_ID) { window.location.href = "index.html"; }
+
+let products       = [];
+let categories     = [];
+let promotions     = [];
+let cart           = [];
+let conversationId = sessionStorage.getItem("tambo_conversation_id") || null;
+let catalogLoaded  = false;
+let purchaseInProgress = false;
+const productRegistry = new Map();
+const promotionRegistry = new Map();
+
+/* =========================================================
+   INIT
+========================================================= */
+window.onload = async () => {
+    document.getElementById("user-badge").textContent = USER_NAME || USER_ID;
+    await initializeApp();
+};
+
+async function initializeApp() {
+    setStatus("conectando...", false);
+    try {
+        await checkBackend();
+        await loadCatalog();
+        setStatus("en línea", true);
+        botMessage(`
+            ¡Hola, <strong>${escapeHtml(USER_NAME || USER_ID)}</strong>! Bienvenido a <strong>Tambo+</strong> 🛒<br><br>
+            Soy <strong>Tambot + </strong>. ¿Qué deseas hoy?
+        `, ["Ver productos","Ver bebidas","Ver snacks","Ver comida","Ver promociones","Mi recomendación IA"]);
+    } catch (error) {
+        setStatus("sin conexión", false);
+        botMessage(`No pude conectarme al backend.<br><br>Verifica que Flask esté corriendo con:<br><code>cd python</code> → <code>python app.py</code>`, ["Reintentar conexión"]);
+    }
+}
+
+/* =========================================================
+   API
+========================================================= */
+async function apiGet(path) {
+    const res = await fetch(`${API_BASE}${path}`);
+    if (!res.ok) throw new Error(`Error GET ${path}: ${res.status}`);
+    return await res.json();
+}
+
+async function apiPost(path, payload) {
+    const res = await fetch(`${API_BASE}${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`Error POST ${path}: ${res.status} ${err}`);
+    }
+    return await res.json();
+}
+
+async function checkBackend()  { await apiGet("/api/health"); }
+
+async function loadCatalog() {
+    const [productosData, categoriasData, promocionesData] = await Promise.all([
+        apiGet("/api/productos"),
+        apiGet("/api/categorias"),
+        apiGet("/api/promociones")
+    ]);
+    products   = normalizeArray(productosData);
+    categories = normalizeArray(categoriasData);
+    promotions = normalizeArray(promocionesData);
+    productRegistry.clear();
+    promotionRegistry.clear();
+    registerProducts(products);
+    registerPromotions(promotions);
+    catalogLoaded = true;
+}
+
+async function searchProducts(text) {
+    const data = await apiGet(`/api/productos/buscar?q=${encodeURIComponent(text || "")}`);
+    return normalizeArray(data);
+}
+
+async function askBackend(message) {
+    const data = await apiPost("/api/chat", {
+        user_id: USER_ID,
+        mensaje: message,
+        conversation_id: conversationId
+    });
+    if (data.conversation_id) {
+        conversationId = data.conversation_id;
+        sessionStorage.setItem("tambo_conversation_id", conversationId);
+    }
+    return data;
+}
+
+/* =========================================================
+   CERRAR SESIÓN
+========================================================= */
+async function cerrarSesion() {
+    if (conversationId) {
+        try {
+            await apiPost("/api/chat/cerrar", { conversation_id: conversationId, user_id: USER_ID });
+        } catch (e) { console.warn("No se pudo cerrar la conversación:", e); }
+    }
+    sessionStorage.removeItem("tambo_user_id");
+    sessionStorage.removeItem("tambo_user_name");
+    sessionStorage.removeItem("tambo_user_segment");
+    sessionStorage.removeItem("tambo_conversation_id");
+    window.location.href = "index.html";
+}
+
+/* =========================================================
+   INPUT
+========================================================= */
+function handleKey(e) { if (e.key === "Enter") processMessage(); }
+
+async function processMessage() {
+    const input = document.getElementById("chat-input");
+    const text  = input.value.trim();
+    if (!text) return;
+    userMessage(text);
+    input.value = "";
+    setStatus("procesando...", true);
+    showTyping(true);
+    try {
+        await chatbot(text);
+        setStatus("en línea", true);
+    } catch (error) {
+        setStatus("error", false);
+        botMessage(`Error consultando el backend.<br>${escapeHtml(error.message)}`, ["Reintentar conexión"]);
+    } finally {
+        showTyping(false);
+    }
+}
+
+/* =========================================================
+   CHATBOT ENGINE
+========================================================= */
+async function chatbot(message) {
+    const q = normalize(message);
+
+    if (q.includes("reintentar")) { await initializeApp(); return; }
+    if (!catalogLoaded) await loadCatalog();
+
+    if (q.includes("carrito") || q.includes("ver compra"))                              { showCart(); return; }
+    if (q.includes("finalizar") || q.includes("cerrar compra") || q.includes("pagar")) { finishPurchase(); return; }
+    if (q.includes("producto") || q.includes("catalogo") || q.includes("catálogo"))     { showProducts(products, "Productos disponibles"); return; }
+    if (q.includes("bebida"))                                                            { await showCategoryOrSearch("bebida", "Bebidas disponibles"); return; }
+    if (q.includes("snack") || q.includes("dulce"))                                     { await showCategoryOrSearch(q.includes("dulce") ? "dulce" : "snack", "Snacks y dulces"); return; }
+    if (q.includes("comida"))                                                            { await showCategoryOrSearch("comida", "Comida lista"); return; }
+    if (q.includes("promo") || q.includes("oferta") || q.includes("descuento"))         { showPromotions(promotions); return; }
+    if (q.includes("recomend") || q.includes("recomiendame") || q === "ia" || q.includes("mi recomendacion")) { await showBackendRecommendation(message); return; }
+
+    const localMatches = findLocalProducts(q);
+    if (localMatches.length) { showProducts(localMatches, `Resultados para "${escapeHtml(message)}"`); return; }
+
+    await showBackendRecommendation(message);
+}
+
+/* =========================================================
+   PRODUCTOS
+========================================================= */
+function showProducts(items, title = "Productos") {
+    registerProducts(items);
+    if (!items || !items.length) { botMessage("No encontré productos disponibles.", ["Ver promociones"]); return; }
+    let html = `<strong style="font-size:15px;letter-spacing:-0.3px;">${escapeHtml(title)}</strong><br><br>`;
+    items.slice(0, 10).forEach(p => { html += productCard(p); });
+    botMessage(html, ["Ver promociones", "Mi carrito", "Mi recomendación IA"]);
+}
+
+async function showCategoryOrSearch(term, title) {
+    const local = findProductsByCategoryOrText(term);
+    if (local.length) { showProducts(local, title); return; }
+    const remote = await searchProducts(term);
+    registerProducts(remote);
+    showProducts(remote, title);
+}
+
+function findLocalProducts(text) {
+    const q = normalize(text);
+    return products.filter(p =>
+        normalize(productName(p)).includes(q) ||
+        normalize(productCategoryName(p)).includes(q) ||
+        normalize(productDescription(p)).includes(q)
+    );
+}
+
+function findProductsByCategoryOrText(text) {
+    const q = normalize(text);
+    return products.filter(p =>
+        normalize(productCategoryName(p)).includes(q) ||
+        normalize(productName(p)).includes(q) ||
+        normalize(productDescription(p)).includes(q)
+    );
+}
+
+function productCard(product) {
+    const id    = productId(product);
+    const name  = productName(product);
+    const price = productPrice(product);
+    const cat   = productCategoryName(product);
+    const stock = productStock(product);
+    const desc  = productDescription(product);
+    const isOutOfStock = Number(stock) <= 0;
+    return `
+    <div class="p-card">
+      <div class="p-card-name">${escapeHtml(name)}</div>
+      <div class="p-card-cat">${escapeHtml(cat || "Producto")}</div>
+      ${desc ? `<div class="p-card-desc">${escapeHtml(desc)}</div>` : ""}
+      <div class="p-card-footer">
+        <span class="p-card-price">S/ ${formatMoney(price)}</span>
+        <span class="p-card-stock">Stock: ${escapeHtml(String(stock))}</span>
+      </div>
+      <button class="p-card-btn" onclick="addProductToCartById('${escapeJs(id)}')" ${isOutOfStock ? "disabled" : ""}>${isOutOfStock ? "Agotado" : "Agregar al carrito"}</button>
+    </div>`;
+}
+
+/* =========================================================
+   PROMOCIONES
+========================================================= */
+function showPromotions(items) {
+    registerPromotions(items);
+    if (!items || !items.length) { botMessage("No encontré promociones activas.", ["Ver productos", "Mi recomendación IA"]); return; }
+    let html = `<strong style="font-size:15px;letter-spacing:-0.3px;">Promociones activas</strong><br><br>`;
+    items.slice(0, 10).forEach(p => { html += promotionCard(p); });
+    botMessage(html, ["Ver productos", "Mi carrito", "Mi recomendación IA"]);
+}
+
+function promotionCard(promo) {
+    const id    = productId(promo);
+    const name  = promo.title  || promo.name  || promo.nombre  || `Promoción ${id}`;
+    const price = promo.promo_price || promo.price || promo.precio || 0;
+    const desc  = promo.description || promo.descripcion || "Promoción activa";
+    const disc  = promo.discount_percent ? `${Number(promo.discount_percent).toFixed(0)}% desc.` : "";
+    return `
+    <div class="promo-card">
+      <div class="promo-card-name">${escapeHtml(name)}</div>
+      <div class="promo-card-desc">${escapeHtml(desc)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="p-card-price">S/ ${formatMoney(price)}</span>
+        ${disc ? `<span class="promo-badge">${escapeHtml(disc)}</span>` : ""}
+      </div>
+      <button class="p-card-btn promo" style="margin-top:10px;" onclick="addPromotionToCartById('${escapeJs(id)}')">Agregar promoción</button>
+    </div>`;
+}
+
+/* =========================================================
+   RECOMENDACIÓN BACKEND
+========================================================= */
+async function showBackendRecommendation(message) {
+    const data      = await askBackend(message);
+    const respuesta = data.respuesta || "El backend respondió correctamente.";
+    const items     = normalizeArray(data.items);
+    const tipo      = data.tipo || "texto";
+    if (tipo === "promociones") { registerPromotions(items); }
+    else                        { registerProducts(items); }
+    let html = `<strong>Tambot ++</strong><br><span style="color:var(--text2)">${escapeHtml(respuesta)}</span><br><br>`;
+    if (items.length) {
+        items.slice(0, 5).forEach(item => {
+            html += tipo === "promociones" ? promotionCard(item) : productCard(item);
+        });
+    }
+    botMessage(html, ["Ver productos", "Ver promociones", "Mi carrito"]);
+}
+
+/* =========================================================
+   CARRITO
+========================================================= */
+async function addProductToCartById(rawId) {
+    const id = normalizeItemId(rawId);
+    let product =
+        productRegistry.get(id) ||
+        products.find(p => normalizeItemId(productId(p)) === id);
+
+    if (!product) {
+        await loadCatalog();
+        product =
+            productRegistry.get(id) ||
+            products.find(p => normalizeItemId(productId(p)) === id);
+    }
+
+    if (!product) {
+        console.error("Producto visible no encontrado en el registro", {
+            requestedId: id,
+            registryIds: [...productRegistry.keys()]
+        });
+        botMessage("No pude actualizar ese producto. Recarga el catalogo e intentalo nuevamente.", ["Ver productos"]);
+        return;
+    }
+
+    addItemToCart({
+        id: normalizeItemId(productId(product)),
+        name: productName(product),
+        price: Number(productPrice(product)) || 0,
+        type: "producto",
+        stock: Number(productStock(product)) || 0
+    });
+}
+
+async function addPromotionToCartById(rawId) {
+    const id = normalizeItemId(rawId);
+    let promo =
+        promotionRegistry.get(id) ||
+        promotions.find(p => normalizeItemId(productId(p)) === id);
+
+    if (!promo) {
+        await loadCatalog();
+        promo =
+            promotionRegistry.get(id) ||
+            promotions.find(p => normalizeItemId(productId(p)) === id);
+    }
+
+    if (!promo) {
+        console.error("Promocion visible no encontrada en el registro", {
+            requestedId: id,
+            registryIds: [...promotionRegistry.keys()]
+        });
+        botMessage("No pude actualizar esa promocion. Recarga el catalogo e intentalo nuevamente.", ["Ver promociones"]);
+        return;
+    }
+
+    addItemToCart({
+        id: normalizeItemId(productId(promo)),
+        name: promo.title ?? promo.name ?? promo.nombre ?? `Promocion ${normalizeItemId(productId(promo))}`,
+        price: Number(promo.promo_price ?? promo.price ?? promo.precio ?? 0),
+        type: "promocion"
+    });
+}
+
+function addItemToCart(item) {
+    if (item.type === "producto") {
+        const availableStock = Number(item.stock) || 0;
+        const existingQty = cart.find(c => c.id === item.id && c.type === item.type)?.qty || 0;
+
+        if (availableStock <= 0) {
+            botMessage(`No hay stock disponible para <strong>${escapeHtml(item.name)}</strong>.`, ["Ver productos"]);
+            return;
+        }
+
+        if (existingQty >= availableStock) {
+            botMessage(`No hay suficiente stock para agregar mas unidades de <strong>${escapeHtml(item.name)}</strong>.`, ["Ver carrito", "Ver productos"]);
+            return;
+        }
+    }
+
+    const existing = cart.find(c => c.id === item.id && c.type === item.type);
+    if (existing) { existing.qty += 1; }
+    else          { cart.push({ ...item, qty: 1 }); }
+    botMessage(`<span style="color:var(--green)">+</span> <strong>${escapeHtml(item.name)}</strong> agregado al carrito`, ["Ver carrito", "Finalizar compra", "Ver productos"]);
+}
+
+function showCart() {
+    if (!cart.length) { botMessage("Tu carrito está vacío.", ["Ver productos", "Ver promociones"]); return; }
+    let total = 0;
+    let html  = `<strong style="font-size:15px;letter-spacing:-0.3px;">Tu carrito</strong><br><br>`;
+    cart.forEach(item => {
+        const sub = item.price * item.qty;
+        total += sub;
+        html += `
+        <div class="cart-item">
+          <div class="cart-item-left">
+            <div class="name">${escapeHtml(item.name)}</div>
+            <div class="meta">${escapeHtml(item.type)} - x${item.qty}</div>
+          </div>
+          <span class="cart-item-price">S/ ${formatMoney(sub)}</span>
+        </div>`;
+    });
+    html += `
+    <div class="cart-total">
+      <span class="cart-total-label">Total</span>
+      <span class="cart-total-value">S/ ${formatMoney(total)}</span>
+    </div>`;
+    botMessage(html, ["Finalizar compra", "Ver productos", "Ver promociones"]);
+}
+
+async function finishPurchase() {
+    if (!cart.length) { botMessage("No tienes productos en el carrito.", ["Ver productos"]); return; }
+    if (purchaseInProgress) { return; }
+
+    purchaseInProgress = true;
+
+    try {
+        const response = await apiPost("/api/ordenes", {
+            user_id:         USER_ID,
+            conversation_id: conversationId,
+            items:           cart.map(item => ({
+                item_id:    item.id,
+                item_type:  item.type,
+                quantity:   item.qty
+            }))
+        });
+
+        if (!response || response.success !== true) {
+            throw new Error("La compra no fue confirmada por el backend.");
+        }
+
+        cart = [];
+        await loadCatalog();
+
+        const html = `
+        <div class="ticket-card">
+          <div class="ticket-icon">OK</div>
+          <div class="ticket-title">Compra finalizada</div>
+          <div class="ticket-row"><span class="lbl">Orden</span><span class="val">${escapeHtml(response.order_id || "-")}</span></div>
+          <div class="ticket-row"><span class="lbl">Total</span><span class="val" style="color:var(--green)">S/ ${formatMoney(response.total_amount)}</span></div>
+          <div class="ticket-row"><span class="lbl">Usuario</span><span class="val">${escapeHtml(USER_NAME || USER_ID)}</span></div>
+          <div class="ticket-thanks">Gracias por comprar en Tambo+</div>
+        </div>`;
+        botMessage(html, ["Ver productos", "Ver promociones"]);
+    } catch (e) {
+        console.warn("No se pudo registrar la orden en el backend:", e);
+        botMessage("No pude registrar la compra en este momento. Tu carrito sigue intacto para que puedas volver a intentarlo.", ["Ver carrito", "Finalizar compra", "Ver productos"]);
+    } finally {
+        purchaseInProgress = false;
+    }
+}
+
+/* =========================================================
+   UI HELPERS
+========================================================= */
+function setStatus(text, online) {
+    document.getElementById("bot-status").innerText = text;
+    const dot = document.getElementById("status-dot");
+    dot.style.background = online ? "var(--green)" : "var(--red)";
+    dot.style.animationPlayState = online ? "running" : "paused";
+}
+
+function showTyping(show) {
+    document.getElementById("typing-indicator").classList.toggle("show", show);
+    if (show) scrollBottom();
+}
+
+function userMessage(text) {
+    const box = document.getElementById("chat-box");
+    const wrap = document.createElement("div");
+    wrap.className = "bubble-wrap user";
+    wrap.innerHTML = `<div class="bubble user">${escapeHtml(text)}</div>`;
+    box.appendChild(wrap);
+    scrollBottom();
+}
+
+function botMessage(html, suggestions = []) {
+    const box = document.getElementById("chat-box");
+    let btns = "";
+    if (suggestions.length) {
+        btns = `<div class="quick-btns">`;
+        suggestions.forEach(s => {
+            btns += `<button class="quick-btn" onclick="quickReply('${escapeJs(s)}')">${escapeHtml(s)}</button>`;
+        });
+        btns += `</div>`;
+    }
+    const wrap = document.createElement("div");
+    wrap.className = "bubble-wrap bot";
+    wrap.innerHTML = `<div class="bubble bot">${html}</div>${btns}`;
+    box.appendChild(wrap);
+    scrollBottom();
+}
+
+function quickReply(text) {
+    document.getElementById("chat-input").value = text;
+    processMessage();
+}
+
+function scrollBottom() {
+    const box = document.getElementById("chat-box");
+    setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
+}
+
+function normalizeArray(data) {
+    if (Array.isArray(data))              return data;
+    if (data && Array.isArray(data.data)) return data.data;
+    if (data && Array.isArray(data.items))return data.items;
+    return [];
+}
+
+function normalizeItemId(value) {
+    return String(value ?? "").trim();
+}
+
+// Centraliza referencias para reutilizar el item renderizado en cualquier vista.
+function registerProducts(items) {
+    normalizeArray(items).forEach(item => {
+        const id = normalizeItemId(productId(item));
+        if (id) productRegistry.set(id, item);
+    });
+}
+
+function registerPromotions(items) {
+    normalizeArray(items).forEach(item => {
+        const id = normalizeItemId(productId(item));
+        if (id) promotionRegistry.set(id, item);
+    });
+}
+
+/* =========================================================
+   ACCESSORS
+========================================================= */
+function productId(item)          { return item?.id ?? item?.product_id ?? item?.id_producto ?? item?.sku ?? ""; }
+function productName(item)        { return item?.name ?? item?.nombre ?? item?.title ?? "Producto sin nombre"; }
+function productPrice(item)       { return item?.price ?? item?.precio ?? item?.unit_price ?? 0; }
+function productStock(item)       { return item?.stock ?? item?.stock_disponible ?? 0; }
+function productDescription(item) { return item?.description ?? item?.descripcion ?? ""; }
+
+function productCategoryName(product) {
+    if (product.category_name) return product.category_name;
+    if (product.categoria)     return product.categoria;
+    if (product.category)      return product.category;
+    const catId = product.category_id ?? product.id_categoria;
+    const cat   = categories.find(c => String(c.id) === String(catId));
+    return cat ? (cat.name || cat.nombre || "") : "";
+}
+
+function formatMoney(value) { return (Number(value) || 0).toFixed(2); }
+
+function normalize(text) {
+    return String(text || "").toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+function escapeJs(value) {
+    return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+const baseAddItemToCart = addItemToCart;
+const baseAddProductToCartById = addProductToCartById;
+const baseAddPromotionToCartById = addPromotionToCartById;
+
+addItemToCart = function(item, options = {}) {
+    if (item.type === "producto") {
+        const availableStock = Number(item.stock) || 0;
+        const existingQty = cart.find(c => c.id === item.id && c.type === item.type)?.qty || 0;
+
+        if (availableStock <= 0) {
+            if (!options.silent) {
+                botMessage(`No hay stock disponible para <strong>${escapeHtml(item.name)}</strong>.`, ["Ver productos"]);
+            }
+            return false;
+        }
+
+        if (existingQty >= availableStock) {
+            if (!options.silent) {
+                botMessage(`No hay suficiente stock para agregar mas unidades de <strong>${escapeHtml(item.name)}</strong>.`, ["Ver carrito", "Ver productos"]);
+            }
+            return false;
+        }
+    }
+
+    const previousLength = cart.length;
+    const previousQty = cart.find(c => c.id === item.id && c.type === item.type)?.qty || 0;
+    baseAddItemToCart(item);
+
+    const currentQty = cart.find(c => c.id === item.id && c.type === item.type)?.qty || 0;
+    const changed = cart.length !== previousLength || currentQty !== previousQty;
+    if (options.silent && changed) {
+        const box = document.getElementById("chat-box");
+        const lastBubble = box.lastElementChild;
+        if (lastBubble && lastBubble.classList.contains("bubble-wrap")) {
+            const bubble = lastBubble.querySelector(".bubble.bot");
+            if (bubble && bubble.innerHTML.includes("agregado al carrito")) {
+                lastBubble.remove();
+            }
+        }
+    }
+    return changed;
+};
+
+addProductToCartById = async function(rawId, options = {}) {
+    const originalBotMessage = botMessage;
+    if (options.silent) {
+        botMessage = () => {};
+    }
+    try {
+        const beforeQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "producto")?.qty || 0;
+        await baseAddProductToCartById(rawId);
+        const afterQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "producto")?.qty || 0;
+        return afterQty > beforeQty;
+    } finally {
+        botMessage = originalBotMessage;
+    }
+};
+
+addPromotionToCartById = async function(rawId, options = {}) {
+    const originalBotMessage = botMessage;
+    if (options.silent) {
+        botMessage = () => {};
+    }
+    try {
+        const beforeQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "promocion")?.qty || 0;
+        await baseAddPromotionToCartById(rawId);
+        const afterQty = cart.find(c => c.id === normalizeItemId(rawId) && c.type === "promocion")?.qty || 0;
+        return afterQty > beforeQty;
+    } finally {
+        botMessage = originalBotMessage;
+    }
+};
+
+const baseShowBackendRecommendation = showBackendRecommendation;
+showBackendRecommendation = async function(message) {
+    const data = await askBackend(message);
+    const respuesta = data.respuesta || "El backend respondió correctamente.";
+    const items = normalizeArray(data.items);
+    const tipo = data.tipo || "texto";
+    const clientAction = data.client_action || null;
+
+    if (tipo === "promociones") { registerPromotions(items); }
+    else { registerProducts(items); }
+
+    let html = `<strong>Tambot ++</strong><br><span style="color:var(--text2)">${escapeHtml(respuesta)}</span><br><br>`;
+    if (items.length) {
+        items.slice(0, 5).forEach(item => {
+            html += tipo === "promociones" ? promotionCard(item) : productCard(item);
+        });
+    }
+    botMessage(html, ["Ver productos", "Ver promociones", "Mi carrito"]);
+
+    if (clientAction && clientAction.type === "add_to_cart") {
+        const added = await applyClientAction(clientAction);
+        if (added) {
+            botMessage("Ya lo agregué al carrito.", ["Ver carrito", "Finalizar compra", "Ver productos"]);
+        } else {
+            botMessage("No pude agregar esa opción al carrito. Tu selección sigue disponible para reintentar.", ["Ver carrito", "Ver productos"]);
+        }
+    }
+};
+
+async function applyClientAction(action) {
+    if (!action || action.type !== "add_to_cart") return false;
+    const quantity = Math.max(1, Number(action.quantity) || 1);
+    for (let index = 0; index < quantity; index += 1) {
+        const ok = action.item_type === "promotion"
+            ? await addPromotionToCartById(action.item_id, { silent: true })
+            : await addProductToCartById(action.item_id, { silent: true });
+        if (!ok) {
+            return false;
+        }
+    }
+    return true;
+}
+
+const originalApiGet = apiGet;
+apiGet = async function(path) {
+    try {
+        return await originalApiGet(path);
+    } catch (error) {
+        console.error("GET request failed", { path, error });
+        throw new Error("No pudimos conectarnos con el servidor. Inténtalo nuevamente.");
+    }
+};
+
+const originalApiPost = apiPost;
+apiPost = async function(path, payload) {
+    try {
+        return await originalApiPost(path, payload);
+    } catch (error) {
+        console.error("POST request failed", { path, error });
+        throw new Error("No pudimos conectarnos con el servidor. Inténtalo nuevamente.");
+    }
+};
+
+const originalProcessMessage = processMessage;
+processMessage = async function() {
+    try {
+        await originalProcessMessage();
+    } catch (error) {
+        console.error("processMessage failed", error);
+        setStatus("error", false);
+        showTyping(false);
+        botMessage("No pudimos conectarnos con el servidor. Inténtalo nuevamente.", ["Reintentar conexión"]);
+    }
+};
+</script>
+</body>
+</html>
