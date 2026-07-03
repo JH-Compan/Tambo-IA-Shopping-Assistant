@@ -124,6 +124,15 @@ html, body {
 }
 .logout-btn:hover { background: rgba(255,59,48,0.18); }
 .logout-btn svg { width: 15px; height: 15px; fill: none; stroke: var(--red); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dashboard-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(88,86,214,0.1);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.dashboard-btn:hover { background: rgba(88,86,214,0.18); }
+.dashboard-btn svg { width: 15px; height: 15px; fill: none; stroke: var(--purple); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ── CHAT AREA ── */
 .chat-area {
@@ -381,6 +390,9 @@ html, body {
     </div>
     <div class="header-right">
       <div class="user-pill" id="user-badge">...</div>
+      <a class="dashboard-btn" href="dashboard.html" target="_blank" rel="noopener" title="Dashboard">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/></svg>
+      </a>
       <button class="logout-btn" onclick="cerrarSesion()" title="Cerrar sesión">
         <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>

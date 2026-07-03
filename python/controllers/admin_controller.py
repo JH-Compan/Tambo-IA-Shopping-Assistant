@@ -9,3 +9,9 @@ metrica_service = MetricaService()
 def resumen_general():
     resumen = metrica_service.obtener_resumen_general()
     return jsonify(resumen), 200
+
+
+@admin_bp.route("/api/admin/dashboard", methods=["GET"])
+def dashboard_completo():
+    data = metrica_service.obtener_dashboard_completo()
+    return jsonify(data), 200
